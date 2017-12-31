@@ -1,10 +1,8 @@
-Custom message: Received NEW_USER_REQUEST from Client 0, UserName isp_student1.
-Custom message: Sent NEW_USER_ACCEPTED to Client 0, UserName isp_student1.
+Custom message: Received NEW_USER_REQUEST from Client 0, UserName isp_student0.
+Custom message: Sent NEW_USER_ACCEPTED to Client 0, UserName isp_student0.
 Custom message: Received NEW_USER_REQUEST from Client 1, UserName isp_student1.
-Custom message: Sent NEW_USER_DECLINED to Client 1, UserName isp_student1.
-Custom message: Received NEW_USER_REQUEST from Client 1, UserName isp_student0.
-Custom message: Sent NEW_USER_ACCEPTED to Client 1, UserName isp_student0.
-Custom message: Sent BOARD_VIEW to Client 1, UserName isp_student0.
-Custom message: Sent BOARD_VIEW to Client 0, UserName isp_student1.
-Custom message: Sent TURN_SWITCH to Client 1, UserName isp_student0.
-Custom message: Sent TURN_SWITCH to Client 0, UserName isp_student1.
+Custom message: Sent NEW_USER_ACCEPTED to Client 1, UserName isp_student1.
+Custom message: Sent BOARD_VIEW to Client 1, UserName isp_student1.
+Custom message: Sent TURN_SWITCH to Client 1, UserName isp_student1.
+Custom message: ReceiveAndSendData failed to recv. Exiting...
+Custom message: ReceiveAndSendData failed to recv. Exiting...

@@ -1,3 +1,0 @@
-Connected to server on 127.0.0.1:8888.
-Sent to server: NEW_USER_REQUEST:isp_student0
-

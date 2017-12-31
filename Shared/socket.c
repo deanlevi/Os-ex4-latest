@@ -48,7 +48,7 @@ char *ReceiveData(SOCKET Socket, char *LogFilePathPtr) {
 		OutputMessageToWindowAndLogFile(LogFilePathPtr, "Custom message: ReceiveData failed to allocate memory.\n");
 		return NULL;
 	}
-	WholeReceivedBuffer[IndexInWholeReceivedBuffers] = '\0'; // so that strstr will work
+	WholeReceivedBuffer[IndexInWholeReceivedBuffers] = '\0'; // so that strstr will work // todo
 
 	while (strstr(WholeReceivedBuffer, "\n") == NULL) {
 		ReceivedBytes = recv(Socket, CurrentReceivedBuffer, MESSAGE_LENGTH, SEND_RECEIVE_FLAGS);

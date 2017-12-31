@@ -137,7 +137,7 @@ void WINAPI SendThread() {
 	int SendDataToServerReturnValue;
 	HandleNewUserRequest();
 	while (TRUE) {
-		WaitForSendToServerSemaphore();
+		WaitForSendToServerSemaphore(); // todo check if add mutex
 		SendDataToServerReturnValue = SendData(Client.Socket, Client.MessageToSendToServer, Client.LogFilePtr);
 		if (SendDataToServerReturnValue == ERROR_CODE) {
 			CloseSocketAndThreads();
@@ -189,19 +189,20 @@ void HandleReceivedData(char *ReceivedData) {
 	if (strncmp(ReceivedData, "NEW_USER_ACCEPTED", 17) == 0 || strncmp(ReceivedData, "NEW_USER_DECLINED", 17) == 0) {
 		HandleNewUserAccept(ReceivedData);
 	}
-	else if (strstr(ReceivedData, "GAME_STARTED") == 0) {
+	else if (strncmp(ReceivedData, "GAME_STARTED", 12) == 0) {
+	//else if (strstr(ReceivedData, "GAME_STARTED") == 0) {
 		OutputMessageToWindowAndLogFile(Client.LogFilePtr, "Game is on!\n");
 	}
-	else if (strstr(ReceivedData, "BOARD_VIEW") == 0) {
+	else if (strncmp(ReceivedData, "BOARD_VIEW", 10) == 0) {
 		HandleBoardView(ReceivedData);
 	}
-	else if (strstr(ReceivedData, "TURN_SWITCH") == 0) {
+	else if (strncmp(ReceivedData, "TURN_SWITCH", 11) == 0) {
 		HandleTurnSwitch(ReceivedData);
 	}
 	else if (strstr(ReceivedData, "PLAY_ACCEPTED") == 0) {
 		OutputMessageToWindowAndLogFile(Client.LogFilePtr, "Well played\n");
 	}
-	else if (strstr(ReceivedData, "PLAY_DECLINED") == 0) { // todo check - not in instruction list !!
+	else if (strstr(ReceivedData, "PLAY_DECLINED") == 0) {
 		HandlePlayDeclined(ReceivedData);
 	}
 	else if (strstr(ReceivedData, "GAME_ENDED") == 0) {
@@ -260,8 +261,10 @@ void HandleBoardView(char *ReceivedData) {
 	for (; LineIndex < BOARD_SIZE; LineIndex++) { // build message
 		strncpy(BoardMessage, ReceivedData + BOARD_MESSAGE_LINE_OFFSET +
 			   (BOARD_MESSAGE_LINE_LENGTH + 1)*LineIndex, LineLength); // + 1 for '\n'
+		BoardMessage[(LineLength + 1)*LineIndex + LineLength] = '\0';
 		strncat(BoardMessage, "\n", 1); // add '\n'
 	}
+	BoardMessage[(LineLength + 1)*BOARD_SIZE] = '\0';
 	printf("%s", BoardMessage);
 }
 
@@ -275,8 +278,9 @@ void HandleTurnSwitch(char *ReceivedData) {
 	}
 	int UserNameLength = UserNameEndPosition - UserNameStartPosition;
 	strncpy(UserName, ReceivedData + UserNameStartPosition, UserNameLength);
+	UserName[UserNameLength] = '\0';
 	char Symbol = ReceivedData[UserNameEndPosition + 1];
-	sprintf(TurnSwitchMessage, "%s's turn (%c)", UserName, Symbol);
+	sprintf(TurnSwitchMessage, "%s's turn (%c)\n", UserName, Symbol);
 	OutputMessageToWindowAndLogFile(Client.LogFilePtr, TurnSwitchMessage);
 }
 
