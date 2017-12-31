@@ -1,13 +1,11 @@
 Connected to server on 127.0.0.1:8888.
 Sent to server: NEW_USER_REQUEST:isp_student1
 
-Received from server: NEW_USER_ACCEPTED:o;2
+Received from server: NEW_USER_ACCEPTED:x;1
 
 Game is on!
 Received from server: GAME_STARTED
 
 Received from server: BOARD_VIEW:| | | |           | | | |           | | | |
 
-isp_student1's turn (o)
-Received from server: TURN_SWITCH:isp_student1;o
-
+Custom message: ReceiveAndSendData failed to recv. Exiting...

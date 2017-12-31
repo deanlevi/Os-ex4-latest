@@ -258,13 +258,16 @@ void HandleBoardView(char *ReceivedData) {
 	char BoardMessage[MESSAGE_LENGTH];
 	int LineLength = 7; // size of "| | | |"
 	int LineIndex = 0;
-	for (; LineIndex < BOARD_SIZE; LineIndex++) { // build message
-		strncpy(BoardMessage, ReceivedData + BOARD_MESSAGE_LINE_OFFSET +
-			   (BOARD_MESSAGE_LINE_LENGTH + 1)*LineIndex, LineLength); // + 1 for '\n'
-		BoardMessage[(LineLength + 1)*LineIndex + LineLength] = '\0';
-		strncat(BoardMessage, "\n", 1); // add '\n'
-	}
-	BoardMessage[(LineLength + 1)*BOARD_SIZE] = '\0';
+	strncpy(BoardMessage, ReceivedData + BOARD_MESSAGE_LINE_OFFSET, LineLength);
+	BoardMessage[LineLength] = '\0';
+	strncat(BoardMessage, "\n", 1);
+	strncat(BoardMessage, ReceivedData + BOARD_MESSAGE_LINE_LENGTH + BOARD_MESSAGE_LINE_OFFSET, LineLength);
+	BoardMessage[2*LineLength + 1] = '\0';
+	strncat(BoardMessage, "\n", 1);
+	strncat(BoardMessage, ReceivedData + 2*BOARD_MESSAGE_LINE_LENGTH + BOARD_MESSAGE_LINE_OFFSET, LineLength);
+	BoardMessage[2*(LineLength + 1) + LineLength] = '\0';
+	strncat(BoardMessage, "\n", 1);
+
 	printf("%s", BoardMessage);
 }
 
