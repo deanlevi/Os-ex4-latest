@@ -14,10 +14,10 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
     <Filter Include="Shared Source Files">
-      <UniqueIdentifier>{48ad9dd0-8043-4b88-b162-690c6e762385}</UniqueIdentifier>
+      <UniqueIdentifier>{1fd0523b-56b9-479f-bf1d-2c65014b2f6e}</UniqueIdentifier>
     </Filter>
     <Filter Include="Shared Header Files">
-      <UniqueIdentifier>{696092cc-64f9-449b-bb45-25a1ccd45bf8}</UniqueIdentifier>
+      <UniqueIdentifier>{fe66094f-0cd2-4099-8148-55a2c5ea8b0b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -27,7 +27,7 @@
     <ClInclude Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\Shared\socket.h">
       <Filter>Shared Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_server\server.h">
+    <ClInclude Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_client\client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -38,10 +38,10 @@
     <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\Shared\socket.c">
       <Filter>Shared Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_server\main.c">
+    <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_client\client.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_server\server.c">
+    <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_client\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

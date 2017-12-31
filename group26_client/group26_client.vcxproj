@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{8079816F-E3A7-4248-BC8B-04194D7195FD}</ProjectGuid>
+    <ProjectGuid>{7F62BF19-B3AA-45DC-A227-F67212DA83D7}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>group26_server</RootNamespace>
+    <RootNamespace>group26_client</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -146,13 +146,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_server\server.h" />
+    <ClInclude Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_client\client.h" />
     <ClInclude Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\Shared\general_functions_and_definitions.h" />
     <ClInclude Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\Shared\socket.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_server\main.c" />
-    <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_server\server.c" />
+    <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_client\client.c" />
+    <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_client\main.c" />
     <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\Shared\general_functions_and_definitions.c" />
     <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\Shared\socket.c" />
   </ItemGroup>
