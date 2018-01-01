@@ -35,7 +35,6 @@ typedef struct _ServerProperties {
 	DWORD ClientsThreadID[NUMBER_OF_CLIENTS]; // thread id to each client
 
 	////// semaphores and mutexes
-	HANDLE GameStartedSemaphore; // to signal that two clients are connected
 	HANDLE NumberOfConnectedUsersSemaphore; // semaphore to signal ConnectUsersThread that NumberOfConnectedUsers was updated.
 	HANDLE NumberOfConnectedUsersMutex; // mutex to write to NumberOfConnectedUsers
 	
@@ -44,7 +43,7 @@ typedef struct _ServerProperties {
 	int PortNum; // server's port num
 	PlayerProperties Players[NUMBER_OF_CLIENTS];
 	int NumberOfConnectedUsers;
-	int Turn; // 0 - first player turn, 1 - second player turn
+	PlayerType Turn; // 0 - first player turn, 1 - second player turn
 	PlayerType Board[BOARD_SIZE][BOARD_SIZE];
 }ServerProperties;
 

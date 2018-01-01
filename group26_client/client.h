@@ -5,6 +5,15 @@
 
 #define NUMBER_OF_THREADS_TO_HANDLE_CLIENT 3
 #define USER_INPUT_LENGTH 20 // todo check
+#define GAME_STARTED_SIZE 12 // todo check if move to general defines
+#define TURN_SWITCH_SIZE 12
+#define BOARD_VIEW_SIZE 11
+#define PLAY_ACCEPTED_SIZE 13
+#define PLAY_DECLINED_SIZE 14
+#define USER_LIST_REPLY_SIZE 16
+#define GAME_STATE_REPLY_SIZE 17
+#define NEW_USER_ACCEPTED_OR_DECLINED_SIZE 17
+#define GAME_ENDED_SIZE 11
 
 typedef struct ClientProperties {
 	////// sockets
