@@ -20,11 +20,12 @@ bool HandleNewUserRequestAndAccept(int ClientIndex);
 void ParseNewUserRequest(char *ReceivedData, int ClientIndex);
 void UpdateNumberOfConnectedUsers();
 void SendGameStartedBoardViewAndTurnSwitch(int ClientIndex);
-void SendBoardView(int ClientIndex);
+void SendBoardView(int ClientIndex, bool IsBoardViewQuery);
 void SendTurnSwitch(int ClientIndex);
 void HandleReceivedData(char *ReceivedData, int ClientIndex);
 void HandlePlayRequest(char *ReceivedData);
 void HandleUserListQuery(int ClientIndex);
+void HandleGameStateQuery(int ClientIndex);
 void CloseSocketsAndThreads();
 
 void InitServer(char *argv[]) {
@@ -69,6 +70,7 @@ void HandleServer() {
 	int GameIndex = 0;
 	for (; GameIndex < NUMBER_OF_GAMES; GameIndex++) {
 		InitBoard(); // init for new game
+		Server.GameStatus = NotStarted;
 		HandleConnectToClients();
 
 		wait_code = WaitForMultipleObjects(NUMBER_OF_CLIENTS, Server.ClientsThreadHandle, TRUE, INFINITE); // todo check INFINITE
@@ -297,6 +299,9 @@ void UpdateNumberOfConnectedUsers() {
 		exit(ERROR_CODE);
 	}
 	Server.NumberOfConnectedUsers++;
+	if (Server.NumberOfConnectedUsers == 2) {
+		Server.GameStatus = Started; // todo verify that here.
+	}
 	if (ReleaseOneSemaphore(Server.NumberOfConnectedUsersSemaphore) == FALSE) { // to signal to ConnectUsersThread
 		WriteToLogFile(Server.LogFilePtr, "Custom message: failed to release NumberOfConnectedUsers semaphore.\n");
 		CloseSocketsAndThreads(); // todo check if add function to handle error
@@ -316,24 +321,35 @@ void SendGameStartedBoardViewAndTurnSwitch(int ClientIndex) {
 		CloseSocketsAndThreads();
 		exit(ERROR_CODE);
 	}
-	SendBoardView(ClientIndex);
+	SendBoardView(ClientIndex, false);
 	SendTurnSwitch(ClientIndex);
 }
 
-void SendBoardView(int ClientIndex) {
+void SendBoardView(int ClientIndex, bool IsBoardViewQuery) {
 	char BoardMessage[MESSAGE_LENGTH];
+	int LineOffset, LineLength;
 	char CharToUpdate;
-	strcpy(BoardMessage, "BOARD_VIEW:| | | |");
-	strcat(BoardMessage, "           | | | |");
-	strcat(BoardMessage, "           | | | |\n");
+	if (IsBoardViewQuery) {
+		strcpy(BoardMessage, "BOARD_VIEW_REPLY:| | | |");
+		strcat(BoardMessage, "                 | | | |");
+		strcat(BoardMessage, "                 | | | |\n");
+		LineOffset = BOARD_VIEW_LINE_OFFSET;
+		LineLength = BOARD_VIEW_QUERY_LINE_LENGTH;
+	}
+	else {
+		strcpy(BoardMessage, "BOARD_VIEW:| | | |");
+		strcat(BoardMessage, "           | | | |");
+		strcat(BoardMessage, "           | | | |\n");
+		LineOffset = BOARD_VIEW_LINE_OFFSET;
+		LineLength = BOARD_VIEW_LINE_LENGTH;
+	}
 	int ColumnNum = BOARD_SIZE - 1;
 	int RowNum;
 	for (; ColumnNum >= 0; ColumnNum--) {
 		for (RowNum = 0; RowNum < BOARD_SIZE; RowNum++) {
 			if (Server.Board[RowNum][ColumnNum] != None) {
 				CharToUpdate = Server.Board[RowNum][ColumnNum] == X ? 'x' : 'o';
-				BoardMessage[BOARD_MESSAGE_LINE_LENGTH*(BOARD_SIZE - 1 - ColumnNum) +
-							 BOARD_MESSAGE_LINE_OFFSET + 2 * RowNum] = CharToUpdate;
+				BoardMessage[LineLength*(BOARD_SIZE - 1 - ColumnNum) + (LineOffset + 1) + 2 * RowNum] = CharToUpdate;
 			}
 		}
 	}
@@ -370,13 +386,13 @@ void HandleReceivedData(char *ReceivedData, int ClientIndex) {
 		HandlePlayRequest(ReceivedData); // todo
 	}
 	else if (strncmp(ReceivedData, "USER_LIST_QUERY", 15) == 0) {
-		HandleUserListQuery(ClientIndex); // todo
+		HandleUserListQuery(ClientIndex);
 	}
 	else if (strncmp(ReceivedData, "GAME_STATE_QUERY", 16) == 0) { // todo - not in the instruction list !!
-		//HandleGameStateQuery(); // todo
+		HandleGameStateQuery(ClientIndex); // todo
 	}
 	else if (strncmp(ReceivedData, "BOARD_VIEW_QUERY", 16) == 0) { // todo - not in the instruction list !!
-		//SendBoardView(ClientIndex); // todo
+		SendBoardView(ClientIndex, true);
 	}
 	else {
 		WriteToLogFile(Server.LogFilePtr, "Custom message: Got unexpected answer from client. Exiting...\n");
@@ -395,20 +411,41 @@ void HandlePlayRequest(char *ReceivedData) {
 }
 
 void HandleUserListQuery(int ClientIndex) {
-	char UserListQueryReply[MESSAGE_LENGTH];
+	char UserListReply[MESSAGE_LENGTH];
 	if (Server.NumberOfConnectedUsers == 2) {
-		sprintf(UserListQueryReply, "USER_LIST_REPLY:Players: x:%s, o:%s\n", Server.Players[0].UserName, Server.Players[1].UserName);
+		sprintf(UserListReply, "USER_LIST_REPLY:Players: x:%s, o:%s\n", Server.Players[0].UserName, Server.Players[1].UserName);
 	}
 	else {
-		sprintf(UserListQueryReply, "USER_LIST_REPLY:Players: x:%s\n", Server.Players[0].UserName);
+		sprintf(UserListReply, "USER_LIST_REPLY:Players: x:%s\n", Server.Players[0].UserName);
 	}
-	int SendDataToServerReturnValue = SendData(Server.ClientsSockets[ClientIndex], UserListQueryReply, Server.LogFilePtr);
+	int SendDataToServerReturnValue = SendData(Server.ClientsSockets[ClientIndex], UserListReply, Server.LogFilePtr);
 	if (SendDataToServerReturnValue == ERROR_CODE) {
 		CloseSocketsAndThreads();
 		exit(ERROR_CODE);
 	}
 	char TempMessage[MESSAGE_LENGTH];
 	sprintf(TempMessage, "Custom message: Sent USER_LIST_REPLY to Client %d, UserName %s.\n",
+						  ClientIndex, Server.Players[ClientIndex].UserName);
+	WriteToLogFile(Server.LogFilePtr, TempMessage);
+}
+
+void HandleGameStateQuery(int ClientIndex) { // todo they didn't tell how to send this !!
+	char GameStateReply[MESSAGE_LENGTH];
+	switch (Server.GameStatus) {
+	case NotStarted:
+		strcpy(GameStateReply, "GAME_STATE_REPLY:Game has not started\n");
+		break;
+	case Started:
+		
+		break;
+	}
+	int SendDataToServerReturnValue = SendData(Server.ClientsSockets[ClientIndex], GameStateReply, Server.LogFilePtr);
+	if (SendDataToServerReturnValue == ERROR_CODE) {
+		CloseSocketsAndThreads();
+		exit(ERROR_CODE);
+	}
+	char TempMessage[MESSAGE_LENGTH];
+	sprintf(TempMessage, "Custom message: Sent GAME_STATE_REPLY to Client %d, UserName %s.\n",
 						  ClientIndex, Server.Players[ClientIndex].UserName);
 	WriteToLogFile(Server.LogFilePtr, TempMessage);
 }

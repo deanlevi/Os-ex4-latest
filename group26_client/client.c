@@ -17,7 +17,7 @@ void HandleNewUserRequest();
 void WINAPI ReceiveThread();
 void HandleReceivedData(char *ReceivedData);
 void HandleNewUserAccept(char *ReceivedData);
-void HandleBoardView(char *ReceivedData);
+void HandleBoardView(char *ReceivedData, bool IsBoardViewQuery);
 void HandleTurnSwitch(char *ReceivedData);
 void HandlePlayDeclined(char *ReceivedData);
 void HandleGameEnded(char *ReceivedData);
@@ -195,7 +195,10 @@ void HandleReceivedData(char *ReceivedData) {
 		OutputMessageToWindowAndLogFile(Client.LogFilePtr, "Game is on!\n");
 	}
 	else if (strncmp(ReceivedData, "BOARD_VIEW:", BOARD_VIEW_SIZE) == 0) {
-		HandleBoardView(ReceivedData);
+		HandleBoardView(ReceivedData, false);
+	}
+	else if (strncmp(ReceivedData, "BOARD_VIEW_REPLY:", BOARD_VIEW_QUERY_SIZE) == 0) {
+		HandleBoardView(ReceivedData, true);
 	}
 	else if (strncmp(ReceivedData, "TURN_SWITCH:", TURN_SWITCH_SIZE) == 0) {
 		HandleTurnSwitch(ReceivedData);
@@ -253,18 +256,20 @@ void HandleNewUserAccept(char *ReceivedData) {
 	// todo check if need to parse player number. 1/2.
 }
 
-void HandleBoardView(char *ReceivedData) {
+void HandleBoardView(char *ReceivedData, bool IsBoardViewQuery) {
 	char BoardMessage[MESSAGE_LENGTH];
-	int LineLength = 7; // size of "| | | |"
+	int OutputLineLength = 7; // size of "| | | |"
+	int InputLineLength = IsBoardViewQuery ? BOARD_VIEW_QUERY_LINE_LENGTH : BOARD_VIEW_LINE_LENGTH;
+	int InputLineOffset = IsBoardViewQuery ? BOARD_VIEW_REPLY_LINE_OFFSET : BOARD_VIEW_LINE_OFFSET;
 	int LineIndex = 0;
-	strncpy(BoardMessage, ReceivedData + BOARD_MESSAGE_LINE_OFFSET, LineLength);
-	BoardMessage[LineLength] = '\0';
+	strncpy(BoardMessage, ReceivedData + InputLineOffset, OutputLineLength);
+	BoardMessage[OutputLineLength] = '\0';
 	strncat(BoardMessage, "\n", 1);
-	strncat(BoardMessage, ReceivedData + BOARD_MESSAGE_LINE_LENGTH + BOARD_MESSAGE_LINE_OFFSET, LineLength);
-	BoardMessage[2*LineLength + 1] = '\0';
+	strncat(BoardMessage, ReceivedData + InputLineLength + InputLineOffset, OutputLineLength);
+	BoardMessage[2* OutputLineLength + 1] = '\0';
 	strncat(BoardMessage, "\n", 1);
-	strncat(BoardMessage, ReceivedData + 2*BOARD_MESSAGE_LINE_LENGTH + BOARD_MESSAGE_LINE_OFFSET, LineLength);
-	BoardMessage[2*(LineLength + 1) + LineLength] = '\0';
+	strncat(BoardMessage, ReceivedData + 2 * InputLineLength + InputLineOffset, OutputLineLength);
+	BoardMessage[2*(OutputLineLength + 1) + OutputLineLength] = '\0';
 	strncat(BoardMessage, "\n", 1);
 
 	printf("%s", BoardMessage);
@@ -342,7 +347,7 @@ void WaitForUserInterfaceSemaphore() {
 
 	wait_code = WaitForSingleObject(Client.UserInterfaceSemaphore, INFINITE); // wait for connection to be established and user accepted
 	if (WAIT_OBJECT_0 != wait_code) {
-		WriteToLogFile(Client.LogFilePtr, "Custom message: SendThread - failed to wait for  UserInterface semaphore.\n");
+		WriteToLogFile(Client.LogFilePtr, "Custom message: SendThread - failed to wait for UserInterface semaphore.\n");
 		CloseSocketAndThreads(); // todo check if add function to handle error
 		exit(ERROR_CODE);
 	}

@@ -16,6 +16,12 @@ typedef struct _PlayerProperties {
 	int ClientIndex; // to send to thread function
 }PlayerProperties;
 
+typedef enum _GameStatus {
+	NotStarted,
+	Started,
+	Ended
+}GameStatus;
+
 /*typedef struct _BoardProperties { // todo check if remove
 	char UserName[USER_NAME_LENGTH];
 	PlayerType PlayerType; // X - first player, O - second player
@@ -45,6 +51,7 @@ typedef struct _ServerProperties {
 	int NumberOfConnectedUsers;
 	PlayerType Turn; // 0 - first player turn, 1 - second player turn
 	PlayerType Board[BOARD_SIZE][BOARD_SIZE];
+	GameStatus GameStatus; // todo update game end
 }ServerProperties;
 
 ServerProperties Server;
