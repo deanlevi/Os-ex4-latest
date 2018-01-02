@@ -147,12 +147,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_client\client.h" />
+    <ClInclude Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_client\send_receive.h" />
+    <ClInclude Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_client\user_interface.h" />
     <ClInclude Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\Shared\general_functions_and_definitions.h" />
     <ClInclude Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\Shared\socket.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_client\client.c" />
     <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_client\main.c" />
+    <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_client\send_receive.c" />
+    <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\group26_client\user_interface.c" />
     <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\Shared\general_functions_and_definitions.c" />
     <ClCompile Include="..\..\..\..\..\..\..\Dean%27s\Documents\Visual Studio 2015\Projects\OperatingSystemsCourse\group26_ex4\Shared\socket.c" />
   </ItemGroup>

@@ -14,6 +14,7 @@ HANDLE CreateThreadSimple(LPTHREAD_START_ROUTINE p_start_routine, LPVOID p_threa
 BOOL ReleaseOneSemaphore(HANDLE Semaphore);
 void CloseOneThreadHandle(HANDLE HandleToClose, char *LogFilePathPtr);
 void CloseWsaData(char *LogFilePathPtr);
+int FindEndOfDataSymbol(char *ReceivedData);
 
 void InitWsaData() {
 	WSADATA wsaData;
@@ -22,7 +23,7 @@ void InitWsaData() {
 	if (StartupRes != NO_ERROR) {
 		printf("Custom message: Error %ld at WSAStartup().\nExiting...\n", StartupRes);
 		// Tell the user that we could not find a usable WinSock DLL.
-		exit(ERROR_CODE); // todo handle error
+		exit(ERROR_CODE);
 	}
 }
 
@@ -37,10 +38,10 @@ void InitLogFile(char *LogFilePathPtr) {
 
 void OutputMessageToWindowAndLogFile(char *LogFilePathPtr, char *MessageToWrite) {
 	printf("%s", MessageToWrite);
-	WriteToLogFile(LogFilePathPtr, MessageToWrite); // todo
+	WriteToLogFile(LogFilePathPtr, MessageToWrite);
 }
 
-void WriteToLogFile(char *LogFilePathPtr, char *MessageToWrite) { // todo check all calls to this function
+void WriteToLogFile(char *LogFilePathPtr, char *MessageToWrite) {
 	FILE *LogFilePointer = fopen(LogFilePathPtr, "a");
 	if (LogFilePointer == NULL) {
 		printf("Custom message: Couldn't open log file.\n");
@@ -108,4 +109,12 @@ void CloseWsaData(char *LogFilePathPtr) {
 		OutputMessageToWindowAndLogFile(ErrorMessage, LogFilePathPtr);
 		exit(ERROR_CODE);
 	}
+}
+
+int FindEndOfDataSymbol(char *ReceivedData) { // find '\n' index in ReceivedData
+	int EndSymbolPosition = 0;
+	while (ReceivedData[EndSymbolPosition] != '\n') {
+		EndSymbolPosition++;
+	}
+	return EndSymbolPosition;
 }

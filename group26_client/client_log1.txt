@@ -1,29 +1,11 @@
 Connected to server on 127.0.0.1:8888.
 Sent to server: NEW_USER_REQUEST:isp_student1
 
-Received from server: NEW_USER_ACCEPTED:o;2
-
 Game is on!
 Received from server: GAME_STARTED
 
 Received from server: BOARD_VIEW:| | | |           | | | |           | | | |
 
-isp_student1's turn (o)
-Received from server: TURN_SWITCH:isp_student1;o
+isp_student1's turn (x)
+Received from server: TURN_SWITCH:isp_student1;x
 
-Players: x:isp_student0, o:isp_student1
-Received from server: USER_LIST_REPLY:Players: x:isp_student0, o:isp_student1
-
-Sent to server: USER_LIST_QUERY
-
-Well played
-r: PLAY_REQUEST:1;1
-
-Received from server: PLAY_ACCEPTED
-
-Received from server: BOARD_VIEW:| | | |           | | | |           |o| | |
-
-Custom message: Got unexpected answer from Server:
-tudent1
-.
-Exiting...
