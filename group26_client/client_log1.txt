@@ -1,6 +1,8 @@
 Connected to server on 127.0.0.1:8888.
 Sent to server: NEW_USER_REQUEST:isp_student1
 
+Received from server: NEW_USER_ACCEPTED:x;1
+
 Game is on!
 Received from server: GAME_STARTED
 
@@ -8,4 +10,19 @@ Received from server: BOARD_VIEW:| | | |           | | | |           | | | |
 
 isp_student1's turn (x)
 Received from server: TURN_SWITCH:isp_student1;x
+
+Well played
+Sent to server: PLAY_REQUEST:1;1
+
+Received from server: PLAY_ACCEPTED
+
+Received from server: BOARD_VIEW:| | | |           | | | |           |x| | |
+
+Players: x:isp_student1, o:isp_student0
+Received from server: USER_LIST_REPLY:Players: x:isp_student1, o:isp_student0
+
+isp_student0's turn (o)
+Received from server: GAME_STATE_REPLY:isp_student0;o
+
+Sent to server: GAME_STATE_QUERY
 

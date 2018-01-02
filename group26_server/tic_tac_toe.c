@@ -11,13 +11,12 @@ void ParseNewUserRequest(char *ReceivedData, int ClientIndex);
 void UpdateNumberOfConnectedUsers();
 void SendGameStartedBoardViewAndTurnSwitch(int ClientIndex);
 void SendBoardView(int ClientIndex, bool IsBoardViewQuery);
-void SendTurnSwitch(int ClientIndex);
+void SendTurn(int ClientIndex, bool IsTurnSwitch);
 void HandleReceivedData(char *ReceivedData, int ClientIndex);
 void HandlePlayRequest(int ClientIndex, char *ReceivedData);
 void CheckIfGameEnded();
 void HandleGameEndedMessage(bool OWon, bool XWon, bool BoardIsFull);
 void HandleUserListQuery(int ClientIndex);
-void HandleGameStateQuery(int ClientIndex);
 
 void WINAPI TicTacToeGameThread(LPVOID lpParam) {
 	if (NULL == lpParam) {
@@ -45,7 +44,13 @@ void WINAPI TicTacToeGameThread(LPVOID lpParam) {
 			exit(ERROR_CODE);
 		}
 		if (strcmp(ReceivedData, "FINISHED") == 0) {
+			Server.NumberOfConnectedUsers -= 1;
 			break; // finished communication
+		}
+		if (Server.NumberOfConnectedUsers < NUMBER_OF_CLIENTS && Server.GameStatus == Started) {
+			OutputMessageToWindowAndLogFile(Server.LogFilePtr, "Player disconnected. Exiting.\n");
+			shutdown(Server.ClientsSockets[*ClientIndexPtr], SD_BOTH);
+			break;
 		}
 		HandleReceivedData(ReceivedData, *ClientIndexPtr);
 		if (Server.GameStatus == Ended) {
@@ -158,7 +163,7 @@ void SendGameStartedBoardViewAndTurnSwitch(int ClientIndex) {
 	Sleep(START_MESSAGES_WAIT);
 	SendBoardView(ClientIndex, false);
 	Sleep(START_MESSAGES_WAIT);
-	SendTurnSwitch(ClientIndex);
+	SendTurn(ClientIndex, true);
 }
 
 void SendBoardView(int ClientIndex, bool IsBoardViewQuery) {
@@ -201,11 +206,12 @@ void SendBoardView(int ClientIndex, bool IsBoardViewQuery) {
 	WriteToLogFile(Server.LogFilePtr, TempMessage);
 }
 
-void SendTurnSwitch(int ClientIndex) {
+void SendTurn(int ClientIndex, bool IsTurnSwitch) {
 	char TurnMessage[MESSAGE_LENGTH];
+	char *MessageType = (IsTurnSwitch) ? "TURN_SWITCH" : "GAME_STATE_REPLY";
 	char TypeOfPlayerWhoHasTurn = Server.Turn == X ? 'x' : 'o';
 	char *UserNameOfPlayerWhoHasTurn = Server.Turn == X ? Server.Players[0].UserName : Server.Players[1].UserName;
-	sprintf(TurnMessage, "TURN_SWITCH:%s;%c\n", UserNameOfPlayerWhoHasTurn, TypeOfPlayerWhoHasTurn);
+	sprintf(TurnMessage, "%s:%s;%c\n", MessageType, UserNameOfPlayerWhoHasTurn, TypeOfPlayerWhoHasTurn);
 	int SendDataToServerReturnValue = SendData(Server.ClientsSockets[ClientIndex], TurnMessage, Server.LogFilePtr);
 	if (SendDataToServerReturnValue == ERROR_CODE) {
 		CloseSocketsAndThreads();
@@ -225,9 +231,9 @@ void HandleReceivedData(char *ReceivedData, int ClientIndex) {
 		HandleUserListQuery(ClientIndex);
 	}
 	else if (strncmp(ReceivedData, "GAME_STATE_QUERY", GAME_STATE_QUERY_SIZE) == 0) { // todo - not in the instruction list !!
-		HandleGameStateQuery(ClientIndex); // todo
+		SendTurn(ClientIndex, false); // todo
 	}
-	else if (strncmp(ReceivedData, "BOARD_VIEW_QUERY", BOARD_VIEW_QUERY_SIZE) == 0) { // todo - not in the instruction list !!
+	else if (strncmp(ReceivedData, "BOARD_VIEW_QUERY", BOARD_VIEW_QUERY_SIZE) == 0) {
 		SendBoardView(ClientIndex, true);
 	}
 	else {
@@ -251,7 +257,7 @@ void HandlePlayRequest(int ClientIndex, char *ReceivedData) {
 	if (Server.Turn != Server.Players[ClientIndex].PlayerType) {
 		strcpy(PlayReply, "PLAY_DECLINED:Not your turn\n");
 	}
-	else if (Server.GameStatus = NotStarted) {
+	else if (Server.GameStatus == NotStarted) {
 		strcpy(PlayReply, "PLAY_DECLINED:Game has not started\n");
 	}
 	else if (RowIndex >= BOARD_SIZE || ColumnIndex >= BOARD_SIZE) {
@@ -279,7 +285,7 @@ void HandlePlayRequest(int ClientIndex, char *ReceivedData) {
 		Server.Turn = (Server.Turn == X) ? O : X; // switch turns
 		for (int Client = 0; Client < NUMBER_OF_CLIENTS; Client++) { // send to both BOARD_VIEW and TURN_SWITCH
 			SendBoardView(Client, false);
-			SendTurnSwitch(Client);
+			SendTurn(Client, true);
 		}
 		CheckIfGameEnded();
 	}
@@ -366,27 +372,6 @@ void HandleUserListQuery(int ClientIndex) {
 	}
 	char TempMessage[MESSAGE_LENGTH];
 	sprintf(TempMessage, "Custom message: Sent USER_LIST_REPLY to Client %d, UserName %s.\n",
-						  ClientIndex, Server.Players[ClientIndex].UserName);
-	WriteToLogFile(Server.LogFilePtr, TempMessage);
-}
-
-void HandleGameStateQuery(int ClientIndex) { // todo they didn't tell how to send this !!
-	char GameStateReply[MESSAGE_LENGTH];
-	switch (Server.GameStatus) {
-	case NotStarted:
-		strcpy(GameStateReply, "GAME_STATE_REPLY:Game has not started\n");
-		break;
-	case Started:
-
-		break;
-	}
-	int SendDataToServerReturnValue = SendData(Server.ClientsSockets[ClientIndex], GameStateReply, Server.LogFilePtr);
-	if (SendDataToServerReturnValue == ERROR_CODE) {
-		CloseSocketsAndThreads();
-		exit(ERROR_CODE);
-	}
-	char TempMessage[MESSAGE_LENGTH];
-	sprintf(TempMessage, "Custom message: Sent GAME_STATE_REPLY to Client %d, UserName %s.\n",
 						  ClientIndex, Server.Players[ClientIndex].UserName);
 	WriteToLogFile(Server.LogFilePtr, TempMessage);
 }

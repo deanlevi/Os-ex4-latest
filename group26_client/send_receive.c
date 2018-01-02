@@ -13,7 +13,7 @@ void WINAPI ReceiveThread();
 void HandleReceivedData(char *ReceivedData);
 void HandleNewUserAccept(char *ReceivedData);
 void HandleBoardView(char *ReceivedData, bool IsBoardViewQuery);
-void HandleTurnSwitch(char *ReceivedData);
+void HandleTurn(char *ReceivedData, bool IsTurnSwitch);
 void HandlePlayDeclined(char *ReceivedData);
 void HandleGameEnded(char *ReceivedData);
 void HandleUserListReply(char *ReceivedData);
@@ -98,7 +98,7 @@ void HandleReceivedData(char *ReceivedData) {
 		HandleBoardView(ReceivedData, true);
 	}
 	else if (strncmp(ReceivedData, "TURN_SWITCH:", TURN_SWITCH_SIZE) == 0) {
-		HandleTurnSwitch(ReceivedData);
+		HandleTurn(ReceivedData, true);
 	}
 	else if (strncmp(ReceivedData, "PLAY_ACCEPTED", PLAY_ACCEPTED_SIZE) == 0) {
 		OutputMessageToWindowAndLogFile(Client.LogFilePtr, "Well played\n");
@@ -110,10 +110,11 @@ void HandleReceivedData(char *ReceivedData) {
 		HandleGameEnded(ReceivedData);
 	}
 	else if (strncmp(ReceivedData, "USER_LIST_REPLY:", USER_LIST_REPLY_SIZE) == 0) {
-		HandleUserListReply(ReceivedData); // todo
+		HandleUserListReply(ReceivedData);
 	}
 	else if (strncmp(ReceivedData, "GAME_STATE_REPLY:", GAME_STATE_REPLY_SIZE) == 0) { // todo check - not in instruction list !!
 																					   // todo - same as TURN_SWITCH ?
+		HandleTurn(ReceivedData, false);
 	}
 	else {
 		sprintf(TempMessage, "Custom message: Got unexpected answer from Server:\n%s.\nExiting...\n", ReceivedData);
@@ -172,10 +173,10 @@ void HandleBoardView(char *ReceivedData, bool IsBoardViewQuery) {
 	printf("%s", BoardMessage);
 }
 
-void HandleTurnSwitch(char *ReceivedData) {
-	char TurnSwitchMessage[MESSAGE_LENGTH];
+void HandleTurn(char *ReceivedData, bool IsTurnSwitch) {
+	char TurnMessage[MESSAGE_LENGTH];
 	char UserName[USER_NAME_LENGTH];
-	int UserNameStartPosition = TURN_SWITCH_SIZE;
+	int UserNameStartPosition = (IsTurnSwitch) ? TURN_SWITCH_SIZE : GAME_STATE_REPLY_SIZE;
 	int UserNameEndPosition = UserNameStartPosition;
 	while (ReceivedData[UserNameEndPosition] != ';') {
 		UserNameEndPosition++;
@@ -184,8 +185,8 @@ void HandleTurnSwitch(char *ReceivedData) {
 	strncpy(UserName, ReceivedData + UserNameStartPosition, UserNameLength);
 	UserName[UserNameLength] = '\0';
 	char Symbol = ReceivedData[UserNameEndPosition + 1];
-	sprintf(TurnSwitchMessage, "%s's turn (%c)\n", UserName, Symbol);
-	OutputMessageToWindowAndLogFile(Client.LogFilePtr, TurnSwitchMessage);
+	sprintf(TurnMessage, "%s's turn (%c)\n", UserName, Symbol);
+	OutputMessageToWindowAndLogFile(Client.LogFilePtr, TurnMessage);
 }
 
 void HandlePlayDeclined(char *ReceivedData) {

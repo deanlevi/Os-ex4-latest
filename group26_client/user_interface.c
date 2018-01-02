@@ -18,6 +18,9 @@ void WINAPI UserInterfaceThread() {
 			break; // finished communication
 		}
 		scanf("%s", UserInput);
+		if (strcmp(Client.MessageToSendToServer, "FINISHED") == 0) { // if finished
+			break; // finished communication
+		}
 		HandleInputFromUser(UserInput);
 	}
 }
@@ -52,8 +55,8 @@ void HandleInputFromUser(char *UserInput) {
 		sprintf(Client.MessageToSendToServer, "PLAY_REQUEST:%d;%d\n", RowNum, ColumnNum);
 	}
 	else if (strcmp(UserInput, "exit") == 0) {
-		// todo
-		NeedToReleaseSendToServerSemaphore = false; // todo remove when fixing
+		strcpy(Client.MessageToSendToServer, "FINISHED");
+		shutdown(Client.Socket, SD_BOTH);
 	}
 	else {
 		// todo
