@@ -5,10 +5,15 @@
 
 #define SERVER_ADDRESS_STR "127.0.0.1" // todo move to shared
 #define NUMBER_OF_CLIENTS 2
-#define NUMBER_OF_GAMES 1 // todo
+#define NUMBER_OF_GAMES 2 // todo
 #define MINUTE_IN_MS 60000
+#define START_MESSAGES_WAIT 50
 #define BINDING_SUCCEEDED 0
 #define LISTEN_SUCCEEDED 0
+#define BOARD_VIEW_QUERY_SIZE 16
+#define PLAY_REQUEST_SIZE 13
+#define USER_LIST_QUERY_SIZE 15
+#define GAME_STATE_QUERY_SIZE 16
 
 typedef struct _PlayerProperties {
 	char UserName[USER_NAME_LENGTH];
@@ -49,7 +54,7 @@ typedef struct _ServerProperties {
 	int PortNum; // server's port num
 	PlayerProperties Players[NUMBER_OF_CLIENTS];
 	int NumberOfConnectedUsers;
-	PlayerType Turn; // 0 - first player turn, 1 - second player turn
+	PlayerType Turn; // X - first player turn, O - second player turn
 	PlayerType Board[BOARD_SIZE][BOARD_SIZE];
 	GameStatus GameStatus; // todo update game end
 }ServerProperties;

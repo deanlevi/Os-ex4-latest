@@ -138,6 +138,9 @@ void WINAPI SendThread() {
 	HandleNewUserRequest();
 	while (TRUE) {
 		WaitForSendToServerSemaphore(); // todo check if add mutex
+		if (strcmp(Client.MessageToSendToServer, "FINISHED") == 0) {
+			break; // finished communication
+		}
 		SendDataToServerReturnValue = SendData(Client.Socket, Client.MessageToSendToServer, Client.LogFilePtr);
 		if (SendDataToServerReturnValue == ERROR_CODE) {
 			CloseSocketAndThreads();
@@ -181,6 +184,15 @@ void WINAPI ReceiveThread() {
 			CloseSocketAndThreads();
 			exit(ERROR_CODE);
 		}
+		if (strcmp(ReceivedData, "FINISHED") == 0) {
+			strcpy(Client.MessageToSendToServer, "FINISHED");
+			if (ReleaseOneSemaphore(Client.SendToServerSemaphore) == FALSE) { // signal sending thread to finish
+				WriteToLogFile(Client.LogFilePtr, "Custom message: SendThread - failed to release SendToServer semaphore.\n");
+				CloseSocketAndThreads(); // todo check if add function to handle error
+				exit(ERROR_CODE);
+			}
+			break; // finished communication
+		}
 		HandleReceivedData(ReceivedData);
 	}
 }
@@ -197,7 +209,7 @@ void HandleReceivedData(char *ReceivedData) {
 	else if (strncmp(ReceivedData, "BOARD_VIEW:", BOARD_VIEW_SIZE) == 0) {
 		HandleBoardView(ReceivedData, false);
 	}
-	else if (strncmp(ReceivedData, "BOARD_VIEW_REPLY:", BOARD_VIEW_QUERY_SIZE) == 0) {
+	else if (strncmp(ReceivedData, "BOARD_VIEW_REPLY:", BOARD_VIEW_REPLY_SIZE) == 0) {
 		HandleBoardView(ReceivedData, true);
 	}
 	else if (strncmp(ReceivedData, "TURN_SWITCH:", TURN_SWITCH_SIZE) == 0) {
@@ -299,6 +311,7 @@ void HandlePlayDeclined(char *ReceivedData) {
 		EndOfMessageOffset++;
 	}
 	strncat(PlayerDeclinedMessage, ReceivedData + PLAY_DECLINED_SIZE, (EndOfMessageOffset - PLAY_DECLINED_SIZE));
+	strcat(PlayerDeclinedMessage, "\n");
 	OutputMessageToWindowAndLogFile(Client.LogFilePtr, PlayerDeclinedMessage);
 }
 
@@ -314,10 +327,10 @@ void HandleGameEnded(char *ReceivedData) {
 			ParameterEndPosition++;
 		}
 		strncpy(UserName, ReceivedData + GAME_ENDED_SIZE, ParameterEndPosition - GAME_ENDED_SIZE);
-		sprintf(GameEndedMessage, "Game ended. The winner is %s!", UserName);
+		UserName[ParameterEndPosition - GAME_ENDED_SIZE] = '\0';
+		sprintf(GameEndedMessage, "Game ended. The winner is %s!\n", UserName);
 		OutputMessageToWindowAndLogFile(Client.LogFilePtr, GameEndedMessage);
 	}
-	// todo handle close connection
 }
 
 void HandleUserListReply(char *ReceivedData) {
@@ -337,6 +350,9 @@ void WINAPI UserInterfaceThread() {
 	WaitForUserInterfaceSemaphore();
 	char UserInput[USER_INPUT_LENGTH];
 	while (TRUE) {
+		if (strcmp(Client.MessageToSendToServer, "FINISHED") == 0) { // if finished
+			break; // finished communication
+		}
 		scanf("%s", UserInput);
 		HandleInputFromUser(UserInput);
 	}

@@ -8,7 +8,7 @@
 #define GAME_STARTED_SIZE 12 // todo check if move to general defines
 #define TURN_SWITCH_SIZE 12
 #define BOARD_VIEW_SIZE 11
-#define BOARD_VIEW_QUERY_SIZE 17
+#define BOARD_VIEW_REPLY_SIZE 17
 #define PLAY_ACCEPTED_SIZE 13
 #define PLAY_DECLINED_SIZE 14
 #define USER_LIST_REPLY_SIZE 16

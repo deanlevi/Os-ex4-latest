@@ -56,6 +56,11 @@ char *ReceiveData(SOCKET Socket, char *LogFilePathPtr) {
 			OutputMessageToWindowAndLogFile(LogFilePathPtr, "Custom message: ReceiveAndSendData failed to recv. Exiting...\n");
 			return NULL;
 		}
+		if (ReceivedBytes == RECV_FINISHED) {
+			shutdown(Socket, SD_SEND);
+			strcpy(WholeReceivedBuffer, "FINISHED");
+			return WholeReceivedBuffer;
+		}
 
 		NeedToReallocWholeBuffer = IndexInWholeReceivedBuffers + ReceivedBytes > SizeOfWholeReceivedBuffer;
 		if (NeedToReallocWholeBuffer) {

@@ -8,6 +8,7 @@
 #include "server.h"
 
 void InitServer(char *argv[]);
+void InitServerForNewGame();
 void HandleServer();
 void CreateSocketBindAndListen();
 void SetSockAddrInAndBind();
@@ -23,7 +24,9 @@ void SendGameStartedBoardViewAndTurnSwitch(int ClientIndex);
 void SendBoardView(int ClientIndex, bool IsBoardViewQuery);
 void SendTurnSwitch(int ClientIndex);
 void HandleReceivedData(char *ReceivedData, int ClientIndex);
-void HandlePlayRequest(char *ReceivedData);
+void HandlePlayRequest(int ClientIndex, char *ReceivedData);
+void CheckIfGameEnded();
+void HandleGameEndedMessage(bool OWon, bool XWon, bool BoardIsFull);
 void HandleUserListQuery(int ClientIndex);
 void HandleGameStateQuery(int ClientIndex);
 void CloseSocketsAndThreads();
@@ -35,12 +38,11 @@ void InitServer(char *argv[]) {
 		Server.ClientsSockets[ClientIndex] = INVALID_SOCKET;
 		Server.ClientsThreadHandle[ClientIndex] = NULL;
 		Server.Players[ClientIndex].ClientIndex = ClientIndex;
-		Server.Players[ClientIndex].PlayerType = None;
 	}
 	Server.ConnectUsersThreadHandle = NULL;
 	Server.LogFilePtr = argv[1];
 	Server.PortNum = atoi(argv[2]);
-	Server.Turn = X;
+
 	Server.NumberOfConnectedUsersSemaphore = CreateSemaphore(
 		NULL,	/* Default security attributes */
 		0,		/* Initial Count - not signaled */
@@ -50,7 +52,6 @@ void InitServer(char *argv[]) {
 		WriteToLogFile(Server.LogFilePtr, "Custom message: Error when creating NumberOfConnectedUsers semaphore.\n");
 		exit(ERROR_CODE);
 	}
-	Server.NumberOfConnectedUsers = 0;
 	Server.NumberOfConnectedUsersMutex = CreateMutex(
 		NULL,	/* default security attributes */
 		FALSE,	/* initially not owned */
@@ -62,6 +63,17 @@ void InitServer(char *argv[]) {
 	InitLogFile(Server.LogFilePtr);
 }
 
+void InitServerForNewGame() {
+	InitBoard(); // init for new game
+	Server.NumberOfConnectedUsers = 0;
+	Server.Turn = X;
+	Server.GameStatus = NotStarted;
+	int ClientIndex = 0;
+	for (; ClientIndex < NUMBER_OF_CLIENTS; ClientIndex++) {
+		Server.Players[ClientIndex].PlayerType = None;
+	}
+}
+
 void HandleServer() {
 	DWORD wait_code;
 
@@ -69,8 +81,7 @@ void HandleServer() {
 
 	int GameIndex = 0;
 	for (; GameIndex < NUMBER_OF_GAMES; GameIndex++) {
-		InitBoard(); // init for new game
-		Server.GameStatus = NotStarted;
+		InitServerForNewGame();
 		HandleConnectToClients();
 
 		wait_code = WaitForMultipleObjects(NUMBER_OF_CLIENTS, Server.ClientsThreadHandle, TRUE, INFINITE); // todo check INFINITE
@@ -191,8 +202,8 @@ void WINAPI TicTacToeGameThread(LPVOID lpParam) {
 		CloseSocketsAndThreads(); // todo add/check print
 		exit(ERROR_CODE);
 	}
-	int *ClientIndex = (int*)lpParam;
-	bool UserWasAccepted = HandleNewUserRequestAndAccept(*ClientIndex);
+	int *ClientIndexPtr = (int*)lpParam;
+	bool UserWasAccepted = HandleNewUserRequestAndAccept(*ClientIndexPtr);
 	if (!UserWasAccepted) {
 		if (ReleaseOneSemaphore(Server.NumberOfConnectedUsersSemaphore) == FALSE) { // to signal to ConnectUsersThread
 			WriteToLogFile(Server.LogFilePtr, "Custom message: failed to release NumberOfConnectedUsers semaphore.\n");
@@ -202,15 +213,23 @@ void WINAPI TicTacToeGameThread(LPVOID lpParam) {
 		return; // finish thread. see how to move creating thread loop to a thread that will be able to continue waiting for clients
 	}
 	UpdateNumberOfConnectedUsers();
-	SendGameStartedBoardViewAndTurnSwitch(*ClientIndex);
+	SendGameStartedBoardViewAndTurnSwitch(*ClientIndexPtr);
 
 	while (TRUE) { // todo while !Server.GameEnded?
-		char *ReceivedData = ReceiveData(Server.ClientsSockets[*ClientIndex], Server.LogFilePtr);
+		char *ReceivedData = ReceiveData(Server.ClientsSockets[*ClientIndexPtr], Server.LogFilePtr);
 		if (ReceivedData == NULL) {
 			CloseSocketsAndThreads();
 			exit(ERROR_CODE);
 		}
-		HandleReceivedData(ReceivedData, *ClientIndex);
+		if (strcmp(ReceivedData, "FINISHED") == 0) {
+			break; // finished communication
+		}
+		HandleReceivedData(ReceivedData, *ClientIndexPtr);
+		if (Server.GameStatus == Ended) {
+			for (int Client = 0; Client < NUMBER_OF_CLIENTS; Client++) {
+				shutdown(Server.ClientsSockets[Client], SD_SEND);
+			}
+		}
 	}
 }
 
@@ -321,7 +340,9 @@ void SendGameStartedBoardViewAndTurnSwitch(int ClientIndex) {
 		CloseSocketsAndThreads();
 		exit(ERROR_CODE);
 	}
+	Sleep(START_MESSAGES_WAIT);
 	SendBoardView(ClientIndex, false);
+	Sleep(START_MESSAGES_WAIT);
 	SendTurnSwitch(ClientIndex);
 }
 
@@ -382,16 +403,16 @@ void SendTurnSwitch(int ClientIndex) {
 }
 
 void HandleReceivedData(char *ReceivedData, int ClientIndex) {
-	if (strncmp(ReceivedData, "PLAY_REQUEST", 12) == 0) {
-		HandlePlayRequest(ReceivedData); // todo
+	if (strncmp(ReceivedData, "PLAY_REQUEST:", PLAY_REQUEST_SIZE) == 0) {
+		HandlePlayRequest(ClientIndex, ReceivedData); // todo
 	}
-	else if (strncmp(ReceivedData, "USER_LIST_QUERY", 15) == 0) {
+	else if (strncmp(ReceivedData, "USER_LIST_QUERY", USER_LIST_QUERY_SIZE) == 0) {
 		HandleUserListQuery(ClientIndex);
 	}
-	else if (strncmp(ReceivedData, "GAME_STATE_QUERY", 16) == 0) { // todo - not in the instruction list !!
+	else if (strncmp(ReceivedData, "GAME_STATE_QUERY", GAME_STATE_QUERY_SIZE) == 0) { // todo - not in the instruction list !!
 		HandleGameStateQuery(ClientIndex); // todo
 	}
-	else if (strncmp(ReceivedData, "BOARD_VIEW_QUERY", 16) == 0) { // todo - not in the instruction list !!
+	else if (strncmp(ReceivedData, "BOARD_VIEW_QUERY", BOARD_VIEW_QUERY_SIZE) == 0) { // todo - not in the instruction list !!
 		SendBoardView(ClientIndex, true);
 	}
 	else {
@@ -401,13 +422,119 @@ void HandleReceivedData(char *ReceivedData, int ClientIndex) {
 		exit(ERROR_CODE);
 	}
 	char TempMessage[MESSAGE_LENGTH];
-	sprintf(TempMessage, "Custom message: Received from server: %s\n", ReceivedData);
+	sprintf(TempMessage, "Custom message: Received from client: %s\n", ReceivedData);
 	WriteToLogFile(Server.LogFilePtr, TempMessage);
 	free(ReceivedData);
 }
 
-void HandlePlayRequest(char *ReceivedData) {
+void HandlePlayRequest(int ClientIndex, char *ReceivedData) {
+	char PlayReply[MESSAGE_LENGTH];
+	int RowIndex = ReceivedData[PLAY_REQUEST_SIZE] - '0' - 1; // will give the digit char as int. -1 to make [1-3] -> [0-2]
+	int ColumnIndex = ReceivedData[PLAY_REQUEST_SIZE + 2] - '0' - 1;
+	bool PlayWasAccepted = false;
 
+	if (Server.Turn != Server.Players[ClientIndex].PlayerType) {
+		strcpy(PlayReply, "PLAY_DECLINED:Not your turn\n");
+	}
+	else if (Server.GameStatus = NotStarted) {
+		strcpy(PlayReply, "PLAY_DECLINED:Game has not started\n");
+	}
+	else if (RowIndex >= BOARD_SIZE || ColumnIndex >= BOARD_SIZE) {
+		strcpy(PlayReply, "PLAY_DECLINED:Illegal move\n");
+	}
+	else if (Server.Board[RowIndex][ColumnIndex] != None) {
+		strcpy(PlayReply, "PLAY_DECLINED:Illegal move\n");
+	}
+	else {
+		strcpy(PlayReply, "PLAY_ACCEPTED\n");
+		PlayWasAccepted = true;
+	}
+	int SendDataToServerReturnValue = SendData(Server.ClientsSockets[ClientIndex], PlayReply, Server.LogFilePtr);
+	if (SendDataToServerReturnValue == ERROR_CODE) {
+		CloseSocketsAndThreads();
+		exit(ERROR_CODE);
+	}
+	char TempMessage[MESSAGE_LENGTH];
+	sprintf(TempMessage, "Custom message: Sent %s to Client %d, UserName %s.\n",
+						  PlayReply, ClientIndex, Server.Players[ClientIndex].UserName);
+	WriteToLogFile(Server.LogFilePtr, TempMessage);
+
+	if (PlayWasAccepted) { // handle play accepted
+		Server.Board[RowIndex][ColumnIndex] = Server.Players[ClientIndex].PlayerType; // mark play
+		Server.Turn = (Server.Turn == X) ? O : X; // switch turns
+		for (int Client = 0; Client < NUMBER_OF_CLIENTS; Client++) { // send to both BOARD_VIEW and TURN_SWITCH
+			SendBoardView(Client, false);
+			SendTurnSwitch(Client);
+		}
+		CheckIfGameEnded();
+	}
+}
+
+void CheckIfGameEnded() {
+	int ORowCounter = 0;
+	int XRowCounter = 0;
+	int OColumnCounter = 0;
+	int XColumnCounter = 0;
+	bool OWon = false;
+	bool XWon = false;
+	bool BoardIsFull = true; // first assuming board is full
+
+	for (int ColumnIndex = 0; ColumnIndex < BOARD_SIZE; ColumnIndex++) { // check row/column win
+		for (int RowIndex = 0; RowIndex < BOARD_SIZE; RowIndex++) {
+			ORowCounter = (Server.Board[RowIndex][ColumnIndex] == O) ? ORowCounter + 1 : ORowCounter;
+			XRowCounter = (Server.Board[RowIndex][ColumnIndex] == X) ? XRowCounter + 1 : XRowCounter;
+			OColumnCounter = (Server.Board[ColumnIndex][RowIndex] == O) ? OColumnCounter + 1 : OColumnCounter;
+			XColumnCounter = (Server.Board[ColumnIndex][RowIndex] == X) ? XColumnCounter + 1 : XColumnCounter;
+			if (Server.Board[RowIndex][ColumnIndex] == None && BoardIsFull) {
+				BoardIsFull = false;
+			}
+		}
+		OWon = (ORowCounter == BOARD_SIZE || OColumnCounter == BOARD_SIZE) ? true : OWon;
+		XWon = (ORowCounter == BOARD_SIZE || XColumnCounter == BOARD_SIZE) ? true : XWon;
+		ORowCounter = 0; // reset for next check
+		XRowCounter = 0;
+		OColumnCounter = 0;
+		XColumnCounter = 0;
+		if (OWon || XWon) {
+			break;
+		}
+	}
+	for (int RowIndex = 0; RowIndex < BOARD_SIZE; RowIndex++) { // check diagonal win
+		ORowCounter = (Server.Board[RowIndex][RowIndex] == O) ? ORowCounter + 1 : ORowCounter;
+		XRowCounter = (Server.Board[RowIndex][RowIndex] == X) ? XRowCounter + 1 : XRowCounter;
+		OColumnCounter = (Server.Board[RowIndex][BOARD_SIZE - 1 - RowIndex] == O) ? OColumnCounter + 1 : OColumnCounter;
+		XColumnCounter = (Server.Board[RowIndex][BOARD_SIZE - 1 - RowIndex] == X) ? XColumnCounter + 1 : XColumnCounter;
+	}
+	OWon = (ORowCounter == BOARD_SIZE || OColumnCounter == BOARD_SIZE) ? true : OWon;
+	XWon = (XRowCounter == BOARD_SIZE || XColumnCounter == BOARD_SIZE) ? true : XWon;
+	OWon = true; // todo patch - remove !!
+	if (OWon || XWon || BoardIsFull) {
+		HandleGameEndedMessage(OWon, XWon, BoardIsFull);
+		Server.GameStatus = Ended;
+	}
+}
+
+void HandleGameEndedMessage(bool OWon, bool XWon, bool BoardIsFull) {
+	char GameEndedMessage[MESSAGE_LENGTH];
+	if (XWon) {
+		sprintf(GameEndedMessage, "GAME_ENDED:%s\n", Server.Players[0].UserName);
+	}
+	else if (OWon) {
+		sprintf(GameEndedMessage, "GAME_ENDED:%s\n", Server.Players[1].UserName);
+	}
+	else if (BoardIsFull) {
+		strcpy(GameEndedMessage, "GAME_ENDED:Tie\n");
+	}
+	for (int ClientIndex = 0; ClientIndex < NUMBER_OF_CLIENTS; ClientIndex++) {
+		int SendDataToServerReturnValue = SendData(Server.ClientsSockets[ClientIndex], GameEndedMessage, Server.LogFilePtr);
+		if (SendDataToServerReturnValue == ERROR_CODE) {
+			CloseSocketsAndThreads();
+			exit(ERROR_CODE);
+		}
+	}
+	char TempMessage[MESSAGE_LENGTH];
+	sprintf(TempMessage, "Custom message: Sent %s.\n", GameEndedMessage);
+	WriteToLogFile(Server.LogFilePtr, TempMessage);
 }
 
 void HandleUserListQuery(int ClientIndex) {
