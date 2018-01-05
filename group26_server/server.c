@@ -39,12 +39,12 @@ void InitServer(char *argv[]) {
 		WriteToLogFile(Server.LogFilePtr, "Custom message: Error when creating NumberOfConnectedUsers semaphore.\n");
 		exit(ERROR_CODE);
 	}
-	Server.NumberOfConnectedUsersMutex = CreateMutex(
+	Server.ServerPropertiesUpdatesMutex = CreateMutex(
 		NULL,	/* default security attributes */
 		FALSE,	/* initially not owned */
 		NULL);	/* unnamed mutex */
-	if (NULL == Server.NumberOfConnectedUsersMutex) {
-		WriteToLogFile(Server.LogFilePtr, "Custom message: Error when creating NumberOfConnectedUsers mutex.\n");
+	if (NULL == Server.ServerPropertiesUpdatesMutex) {
+		WriteToLogFile(Server.LogFilePtr, "Custom message: Error when creating ServerPropertiesUpdates mutex.\n");
 		exit(ERROR_CODE);
 	}
 	InitLogFile(Server.LogFilePtr);
@@ -134,7 +134,7 @@ void CloseSocketsAndThreads() {
 		CloseOneSocket(Server.ClientsSockets[ClientIndex], Server.LogFilePtr);
 		CloseOneThreadHandle(Server.ClientsThreadHandle[ClientIndex], Server.LogFilePtr);
 	}
-	CloseOneThreadHandle(Server.NumberOfConnectedUsersMutex, Server.LogFilePtr);
+	CloseOneThreadHandle(Server.ServerPropertiesUpdatesMutex, Server.LogFilePtr);
 	CloseOneSocket(Server.ListeningSocket, Server.LogFilePtr);
 	
 	CloseWsaData(Server.LogFilePtr);

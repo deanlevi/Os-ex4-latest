@@ -24,6 +24,8 @@ void WINAPI TicTacToeGameThread(LPVOID lpParam) {
 		CloseSocketsAndThreads();
 		exit(ERROR_CODE);
 	}
+	DWORD wait_code;
+	BOOL ret_val;
 	int *ClientIndexPtr = (int*)lpParam;
 	bool UserWasAccepted = HandleNewUserRequestAndAccept(*ClientIndexPtr);
 	if (!UserWasAccepted) {
@@ -37,7 +39,7 @@ void WINAPI TicTacToeGameThread(LPVOID lpParam) {
 	UpdateNumberOfConnectedUsers();
 	SendGameStartedBoardViewAndTurnSwitch(*ClientIndexPtr);
 
-	while (TRUE) {
+	while (TRUE) { // game started
 		char *ReceivedData = ReceiveData(Server.ClientsSockets[*ClientIndexPtr], Server.LogFilePtr);
 		if (ReceivedData == NULL) {
 			CloseSocketsAndThreads();
@@ -52,7 +54,20 @@ void WINAPI TicTacToeGameThread(LPVOID lpParam) {
 			shutdown(Server.ClientsSockets[*ClientIndexPtr], SD_BOTH);
 			break;
 		}
-		HandleReceivedData(ReceivedData, *ClientIndexPtr);
+		wait_code = WaitForSingleObject(Server.ServerPropertiesUpdatesMutex, INFINITE); // wait for Mutex access
+		if (WAIT_OBJECT_0 != wait_code) {
+			WriteToLogFile(Server.LogFilePtr, "Custom message: Error in wait for ServerPropertiesUpdatesMutex.\n");
+			CloseSocketsAndThreads();
+			exit(ERROR_CODE);
+		}
+		HandleReceivedData(ReceivedData, *ClientIndexPtr); // each time one client is handled
+		Sleep(SEND_MESSAGES_WAIT);
+		ret_val = ReleaseMutex(Server.ServerPropertiesUpdatesMutex); // release mutex
+		if (FALSE == ret_val) {
+			WriteToLogFile(Server.LogFilePtr, "Custom message: Error in releasing ServerPropertiesUpdatesMutex.\n");
+			CloseSocketsAndThreads();
+			exit(ERROR_CODE);
+		}
 		if (Server.GameStatus == Ended) {
 			for (int Client = 0; Client < NUMBER_OF_CLIENTS; Client++) {
 				shutdown(Server.ClientsSockets[Client], SD_SEND);
@@ -90,6 +105,7 @@ bool HandleNewUserRequestAndAccept(int ClientIndex) {
 		CloseSocketsAndThreads();
 		exit(ERROR_CODE);
 	}
+	Sleep(SEND_MESSAGES_WAIT); // give a little time before sending game is on
 	char TempMessage[MESSAGE_LENGTH];
 	sprintf(TempMessage, "Custom message: Sent %s to Client %d, UserName %s.\n",
 						  NewUserReply, ClientIndex, Server.Players[ClientIndex].UserName);
@@ -130,15 +146,15 @@ void UpdateNumberOfConnectedUsers() {
 	DWORD wait_code;
 	BOOL ret_val;
 
-	wait_code = WaitForSingleObject(Server.NumberOfConnectedUsersMutex, INFINITE); // wait for Mutex access
+	wait_code = WaitForSingleObject(Server.ServerPropertiesUpdatesMutex, INFINITE); // wait for Mutex access
 	if (WAIT_OBJECT_0 != wait_code) {
-		WriteToLogFile(Server.LogFilePtr, "Custom message: Error in wait for NumberOfConnectedUsersMutex.\n");
+		WriteToLogFile(Server.LogFilePtr, "Custom message: Error in wait for ServerPropertiesUpdatesMutex.\n");
 		CloseSocketsAndThreads();
 		exit(ERROR_CODE);
 	}
 	Server.NumberOfConnectedUsers++;
 	if (Server.NumberOfConnectedUsers == 2) {
-		CloseOneSocket(Server.ListeningSocket, Server.LogFilePtr); // don't listen to more clients untill next game
+		//CloseOneSocket(Server.ListeningSocket, Server.LogFilePtr); // don't listen to more clients untill next game // todo
 		Server.GameStatus = Started; // todo verify that here.
 	}
 	if (ReleaseOneSemaphore(Server.NumberOfConnectedUsersSemaphore) == FALSE) { // to signal to ConnectUsersThread
@@ -146,9 +162,9 @@ void UpdateNumberOfConnectedUsers() {
 		CloseSocketsAndThreads();
 		exit(ERROR_CODE);
 	}
-	ret_val = ReleaseMutex(Server.NumberOfConnectedUsersMutex); // release mutex
+	ret_val = ReleaseMutex(Server.ServerPropertiesUpdatesMutex); // release mutex
 	if (FALSE == ret_val) {
-		WriteToLogFile(Server.LogFilePtr, "Custom message: Error in releasing NumberOfConnectedUsersMutex.\n");
+		WriteToLogFile(Server.LogFilePtr, "Custom message: Error in releasing ServerPropertiesUpdatesMutex.\n");
 		CloseSocketsAndThreads();
 		exit(ERROR_CODE);
 	}
@@ -160,9 +176,9 @@ void SendGameStartedBoardViewAndTurnSwitch(int ClientIndex) {
 		CloseSocketsAndThreads();
 		exit(ERROR_CODE);
 	}
-	Sleep(START_MESSAGES_WAIT);
+	Sleep(SEND_MESSAGES_WAIT);
 	SendBoardView(ClientIndex, false);
-	Sleep(START_MESSAGES_WAIT);
+	Sleep(SEND_MESSAGES_WAIT);
 	SendTurn(ClientIndex, true);
 }
 
@@ -290,6 +306,7 @@ void HandlePlayRequest(int ClientIndex, char *ReceivedData) {
 		Server.Turn = (Server.Turn == X) ? O : X; // switch turns
 		for (int Client = 0; Client < NUMBER_OF_CLIENTS; Client++) { // send to both BOARD_VIEW and TURN_SWITCH
 			SendBoardView(Client, false);
+			Sleep(SEND_MESSAGES_WAIT);
 			SendTurn(Client, true);
 		}
 		CheckIfGameEnded();
@@ -334,6 +351,7 @@ void CheckIfGameEnded() {
 	OWon = (ORowCounter == BOARD_SIZE || OColumnCounter == BOARD_SIZE) ? true : OWon;
 	XWon = (XRowCounter == BOARD_SIZE || XColumnCounter == BOARD_SIZE) ? true : XWon;
 	if (OWon || XWon || BoardIsFull) {
+		Sleep(SEND_MESSAGES_WAIT); // let turn message pass
 		HandleGameEndedMessage(OWon, XWon, BoardIsFull);
 		Server.GameStatus = Ended;
 	}
@@ -357,7 +375,7 @@ void HandleGameEndedMessage(bool OWon, bool XWon, bool BoardIsFull) {
 			exit(ERROR_CODE);
 		}
 	}
-	Sleep(START_MESSAGES_WAIT); // so server will send game ended message before closing connections
+	Sleep(SEND_MESSAGES_WAIT); // so server will send game ended message before closing connections
 	char TempMessage[MESSAGE_LENGTH];
 	sprintf(TempMessage, "Custom message: Sent %s.\n", GameEndedMessage);
 	WriteToLogFile(Server.LogFilePtr, TempMessage);

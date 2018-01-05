@@ -22,7 +22,7 @@ void HandleConnectToClients() {
 			CloseSocketsAndThreads();
 			exit(ERROR_CODE);
 		}
-		TimeToWait = ClientIndex == 0 ? MINUTE_IN_MS : (4 * MINUTE_IN_MS); // wait one minute for first client and four more for second
+		TimeToWait = ClientIndex == 0 ? (5 * MINUTE_IN_MS) : INFINITE; // wait five minutes for first client and then as needed for second
 		wait_code = WaitForSingleObject(Server.ConnectUsersThreadHandle, TimeToWait); // wait for client
 		if (WAIT_OBJECT_0 != wait_code) {
 			Server.WaitingForClientsTimedOut = true;

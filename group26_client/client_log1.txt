@@ -1,55 +1,5 @@
 Connected to server on 127.0.0.1:8888
+Request to join was refused.
 Sent to server: NEW_USER_REQUEST:isp_student1
 
-Received from server: NEW_USER_ACCEPTED:o;2
-
-Game is on!
-Received from server: GAME_STARTED
-
-Received from server: BOARD_VIEW:| | | |           | | | |           | | | |
-
-isp_student0's turn (x)
-Received from server: TURN_SWITCH:isp_student0;x
-
-Received from server: BOARD_VIEW:| | | |           | | | |           |x| | |
-
-isp_student1's turn (o)
-Received from server: TURN_SWITCH:isp_student1;o
-
-Sent to server: PLAY_REQUEST:2;1
-
-Received from server: PLAY_ACCEPTED
-
-Received from server: BOARD_VIEW:| | | |           | | | |           |x|o| |
-
-isp_student0's turn (x)
-Received from server: TURN_SWITCH:isp_student0;x
-
-Received from server: BOARD_VIEW:| | | |           | |x| |           |x|o| |
-
-isp_student1's turn (o)
-Received from server: TURN_SWITCH:isp_student1;o
-
-Sent to server: PLAY_REQUEST:2;1
-
-Received from server: PLAY_DECLINED:Illegal move
-
-Sent to server: PLAY_REQUEST:1;2
-
-Well played
-Received from server: PLAY_ACCEPTED
-
-Received from server: BOARD_VIEW:| | | |           |o|x| |           |x|o| |
-
-isp_student0's turn (x)
-Received from server: TURN_SWITCH:isp_student0;x
-
-Received from server: BOARD_VIEW:| | |x|           |o|x| |           |x|o| |
-
-isp_student1's turn (o)
-Received from server: TURN_SWITCH:isp_student1;o
-
-Game ended. The winner is isp_student0!
-Received from server: GAME_ENDED:isp_student0
-
-Server disconnected. Exiting.
+Custom message: SendThread - failed to wait for  UserInterface semaphore.

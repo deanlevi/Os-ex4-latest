@@ -29,7 +29,7 @@ void InitClient(char *argv[]) {
 	Client.UserInterfaceSemaphore = NULL;
 	Client.SendToServerSemaphore = NULL;
 	Client.PlayerType = None;
-	Client.GotExitFromUser = false;
+	Client.GotExitFromUserOrGameFinished = false;
 	InitLogFile(Client.LogFilePtr);
 }
 
@@ -48,10 +48,10 @@ void HandleClient() {
 	ConnectToServer();
 	CreateThreadsAndSemaphores();
 
-	wait_code = WaitForMultipleObjects(NUMBER_OF_THREADS_TO_HANDLE_CLIENT, Client.ThreadHandles, TRUE, INFINITE); // todo check INFINITE
+	wait_code = WaitForMultipleObjects(NUMBER_OF_THREADS_TO_HANDLE_CLIENT, Client.ThreadHandles, TRUE, INFINITE);
 	if (WAIT_OBJECT_0 != wait_code) {
 		WriteToLogFile(Client.LogFilePtr, "Custom message: Error when waiting for program to end.\n");
-		CloseSocketAndThreads(); // todo add/check print
+		CloseSocketAndThreads();
 		exit(ERROR_CODE);
 	}
 }
@@ -68,7 +68,7 @@ void ConnectToServer() {
 	if (ConnectReturnValue == SOCKET_ERROR) {
 		sprintf(ConnectMessage, "Failed connecting to server on %s:%d. Exiting.\n", Client.ServerIP, Client.ServerPortNum);
 		OutputMessageToWindowAndLogFile(Client.LogFilePtr, ConnectMessage);
-		CloseSocketAndThreads(); // todo check if add function to handle error
+		CloseSocketAndThreads();
 		exit(ERROR_CODE);
 	}
 	sprintf(ConnectMessage, "Connected to server on %s:%d\n", Client.ServerIP, Client.ServerPortNum);
@@ -93,7 +93,7 @@ void CreateThreadsAndSemaphores() {
 
 	if (Client.ThreadHandles[0] == NULL || Client.ThreadHandles[1] == NULL || Client.ThreadHandles[2] == NULL) {
 		WriteToLogFile(Client.LogFilePtr, "Custom message: CreateThreadsAndSemaphores failed to create threads.\n");
-		CloseSocketAndThreads(); // todo check if add function to handle error
+		CloseSocketAndThreads();
 		exit(ERROR_CODE);
 	}
 
@@ -105,7 +105,7 @@ void CreateThreadsAndSemaphores() {
 
 	if (Client.UserInterfaceSemaphore == NULL) {
 		WriteToLogFile(Client.LogFilePtr, "Custom message: CreateThreadsAndSemaphores - Error when creating UserInterface semaphore.\n");
-		CloseSocketAndThreads(); // todo check if add function to handle error
+		CloseSocketAndThreads();
 		exit(ERROR_CODE);
 	}
 	Client.SendToServerSemaphore = CreateSemaphore(
@@ -116,12 +116,12 @@ void CreateThreadsAndSemaphores() {
 
 	if (Client.SendToServerSemaphore == NULL) {
 		WriteToLogFile(Client.LogFilePtr, "Custom message: CreateThreadsAndSemaphores - Error when creating SendToServer semaphore.\n");
-		CloseSocketAndThreads(); // todo check if add function to handle error
+		CloseSocketAndThreads();
 		exit(ERROR_CODE);
 	}
 }
 
-void CloseSocketAndThreads() { // todo
+void CloseSocketAndThreads() {
 	CloseOneSocket(Client.Socket, Client.LogFilePtr);
 	int ThreadIndex = 0;
 	for (; ThreadIndex < NUMBER_OF_THREADS_TO_HANDLE_CLIENT; ThreadIndex++) {

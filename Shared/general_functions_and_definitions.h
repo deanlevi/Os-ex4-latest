@@ -13,6 +13,7 @@
 
 #define SUCCESS_CODE (int)(0)
 #define ERROR_CODE (int)(-1)
+#define SEND_MESSAGES_WAIT 20
 #define MESSAGE_LENGTH 100
 #define USER_NAME_LENGTH 31
 #define BOARD_SIZE 3

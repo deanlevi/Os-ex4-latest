@@ -3,7 +3,7 @@
 
 #include "client.h"
 
-#define GAME_STARTED_SIZE 12 // todo check if move to general defines
+#define GAME_STARTED_SIZE 12
 #define TURN_SWITCH_SIZE 12
 #define BOARD_VIEW_SIZE 11
 #define BOARD_VIEW_REPLY_LINE_OFFSET 17

@@ -3,7 +3,7 @@
 
 #include "client.h"
 
-#define USER_INPUT_LENGTH 20 // todo check
+#define USER_INPUT_LENGTH 20
 
 void WINAPI UserInterfaceThread();
 

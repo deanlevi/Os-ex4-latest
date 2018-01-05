@@ -16,7 +16,7 @@ void HandleTurn(char *ReceivedData, bool IsTurnSwitch);
 void HandlePlayDeclined(char *ReceivedData);
 void HandleGameEnded(char *ReceivedData);
 void HandleUserListReply(char *ReceivedData);
-int FindNextParameterEnd(char *ReceivedData, bool *ReachedEndOfData, int *ParameterEndPosition);
+void FindNextParameterEnd(char *ReceivedData, bool *ReachedEndOfData, int *ParameterEndPosition);
 
 void WINAPI SendThread() {
 	int SendDataToServerReturnValue;
@@ -63,19 +63,29 @@ void HandleNewUserRequest() {
 }
 
 void WINAPI ReceiveThread() {
+	char *ReceivedData = NULL;
 	while (TRUE) {
-		char *ReceivedData = ReceiveData(Client.Socket, Client.LogFilePtr);
-		if (ReceivedData == NULL) {
-			CloseSocketAndThreads();
-			exit(ERROR_CODE);
-		}
-		if (strcmp(ReceivedData, "FINISHED") == 0) {
-			if (Client.GotExitFromUser) {
+		if (!Client.GotExitFromUserOrGameFinished) {
+			ReceivedData = ReceiveData(Client.Socket, Client.LogFilePtr);
+			if (ReceivedData == NULL) {
+				CloseSocketAndThreads();
+				exit(ERROR_CODE);
+			}
+		};
+		if (Client.GotExitFromUserOrGameFinished || strcmp(ReceivedData, "FINISHED") == 0) {
+			if (Client.GotExitFromUserOrGameFinished) {
 				strcpy(Client.MessageToSendToServer, "FINISHED");
 				if (ReleaseOneSemaphore(Client.SendToServerSemaphore) == FALSE) { // signal sending thread to finish
-					WriteToLogFile(Client.LogFilePtr, "Custom message: SendThread - failed to release SendToServer semaphore.\n");
+					WriteToLogFile(Client.LogFilePtr, "Custom message: ReceiveThread - failed to release SendToServer semaphore.\n");
 					CloseSocketAndThreads();
 					exit(ERROR_CODE); // todo exits like this when game ends because server disconnects
+				}
+				if (Client.ThreadHandles[2] != NULL) { // if user interface is active
+					if (TerminateThread(Client.ThreadHandles[2], WAIT_OBJECT_0) == FALSE) {
+						WriteToLogFile(Client.LogFilePtr, "Custom message: ReceiveThread - failed to terminate user interface thread.\n");
+						CloseSocketAndThreads();
+						exit(ERROR_CODE);
+					}
 				}
 				break;
 			}
@@ -233,6 +243,8 @@ void HandleGameEnded(char *ReceivedData) {
 		sprintf(GameEndedMessage, "Game ended. The winner is %s!\n", UserName);
 		OutputMessageToWindowAndLogFile(Client.LogFilePtr, GameEndedMessage);
 	}
+	Client.GotExitFromUserOrGameFinished = true;
+	shutdown(Client.Socket, SD_BOTH);
 }
 
 void HandleUserListReply(char *ReceivedData) {
@@ -269,7 +281,7 @@ void HandleUserListReply(char *ReceivedData) {
 	OutputMessageToWindowAndLogFile(Client.LogFilePtr, UserListReply);
 }
 
-int FindNextParameterEnd(char *ReceivedData, bool *ReachedEndOfData, int *ParameterEndPosition) {
+void FindNextParameterEnd(char *ReceivedData, bool *ReachedEndOfData, int *ParameterEndPosition) {
 	while (ReceivedData[*ParameterEndPosition] != ';' && ReceivedData[*ParameterEndPosition] != '\n') {
 		(*ParameterEndPosition)++;
 	}

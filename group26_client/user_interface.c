@@ -30,7 +30,7 @@ void WaitForUserInterfaceSemaphore() {
 	wait_code = WaitForSingleObject(Client.UserInterfaceSemaphore, INFINITE); // wait for connection to be established and user accepted
 	if (WAIT_OBJECT_0 != wait_code) {
 		WriteToLogFile(Client.LogFilePtr, "Custom message: SendThread - failed to wait for UserInterface semaphore.\n");
-		CloseSocketAndThreads(); // todo check if add function to handle error
+		CloseSocketAndThreads();
 		exit(ERROR_CODE);
 	}
 }
@@ -55,8 +55,9 @@ void HandleInputFromUser(char *UserInput) {
 	}
 	else if (strcmp(UserInput, "exit") == 0) {
 		strcpy(Client.MessageToSendToServer, "FINISHED");
-		Client.GotExitFromUser = true;
+		Client.GotExitFromUserOrGameFinished = true;
 		shutdown(Client.Socket, SD_BOTH);
+		NeedToReleaseSendToServerSemaphore = false;
 	}
 	else {
 		OutputMessageToWindowAndLogFile(Client.LogFilePtr, "Error: Illegal command\n");
@@ -65,7 +66,7 @@ void HandleInputFromUser(char *UserInput) {
 	if (NeedToReleaseSendToServerSemaphore) {
 		if (ReleaseOneSemaphore(Client.SendToServerSemaphore) == FALSE) { // signal sending thread that a message is ready for sending
 			WriteToLogFile(Client.LogFilePtr, "Custom message: SendThread - failed to release SendToServer semaphore.\n");
-			CloseSocketAndThreads(); // todo check if add function to handle error
+			CloseSocketAndThreads();
 			exit(ERROR_CODE);
 		}
 	}

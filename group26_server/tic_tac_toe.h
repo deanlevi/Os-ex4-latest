@@ -3,7 +3,6 @@
 
 #include "server.h"
 
-#define START_MESSAGES_WAIT 50
 #define BOARD_VIEW_QUERY_SIZE 16
 
 #define PLAY_REQUEST_SIZE 13

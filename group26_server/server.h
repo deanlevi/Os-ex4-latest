@@ -3,11 +3,11 @@
 
 #include <stdbool.h>
 
-#include "../Shared/socket.h" // todo
+#include "socket.h"
 
 #define SERVER_ADDRESS_STR "127.0.0.1"
 #define NUMBER_OF_CLIENTS 2
-#define NUMBER_OF_GAMES 2 // todo
+#define NUMBER_OF_GAMES 1 // todo
 #define BINDING_SUCCEEDED 0
 #define LISTEN_SUCCEEDED 0
 
@@ -37,7 +37,7 @@ typedef struct _ServerProperties {
 
 	////// semaphores and mutexes
 	HANDLE NumberOfConnectedUsersSemaphore; // semaphore to signal ConnectUsersThread that NumberOfConnectedUsers was updated.
-	HANDLE NumberOfConnectedUsersMutex; // mutex to write to NumberOfConnectedUsers
+	HANDLE ServerPropertiesUpdatesMutex; // mutex to update server properties
 	
 	////// others
 	char *LogFilePtr; // path to log file
