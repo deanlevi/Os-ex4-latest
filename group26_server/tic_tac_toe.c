@@ -34,7 +34,7 @@ void WINAPI TicTacToeGameThread(LPVOID lpParam) {
 			CloseSocketsAndThreads();
 			exit(ERROR_CODE);
 		}
-		return; // finish thread. see how to move creating thread loop to a thread that will be able to continue waiting for clients
+		return;
 	}
 	UpdateNumberOfConnectedUsers();
 	SendGameStartedBoardViewAndTurnSwitch(*ClientIndexPtr);
@@ -85,10 +85,10 @@ bool HandleNewUserRequestAndAccept(int ClientIndex) {
 	ParseNewUserRequest(ReceivedData, ClientIndex);
 	char NewUserReply[MESSAGE_LENGTH];
 	bool UserNameIsTaken = (ClientIndex == 1) && (strcmp(Server.Players[0].UserName, Server.Players[1].UserName) == 0);
-	bool ReturnValue;
+	bool UserAccepted;
 	if (UserNameIsTaken) {
 		strcpy(NewUserReply, "NEW_USER_DECLINED\n");
-		ReturnValue = false;
+		UserAccepted = false;
 	}
 	else {
 		Server.Players[ClientIndex].PlayerType = ClientIndex == 0 ? X : O;
@@ -98,7 +98,7 @@ bool HandleNewUserRequestAndAccept(int ClientIndex) {
 		else {
 			sprintf(NewUserReply, "NEW_USER_ACCEPTED:o;2\n");
 		}
-		ReturnValue = true;
+		UserAccepted = true;
 	}
 	int SendDataToServerReturnValue = SendData(Server.ClientsSockets[ClientIndex], NewUserReply, Server.LogFilePtr);
 	if (SendDataToServerReturnValue == ERROR_CODE) {
@@ -110,7 +110,7 @@ bool HandleNewUserRequestAndAccept(int ClientIndex) {
 	sprintf(TempMessage, "Custom message: Sent %s to Client %d, UserName %s.\n",
 						  NewUserReply, ClientIndex, Server.Players[ClientIndex].UserName);
 	WriteToLogFile(Server.LogFilePtr, TempMessage);
-	return ReturnValue;
+	return UserAccepted;
 }
 
 void ParseNewUserRequest(char *ReceivedData, int ClientIndex) {
@@ -134,7 +134,7 @@ void ParseNewUserRequest(char *ReceivedData, int ClientIndex) {
 	EndPosition = FindEndOfDataSymbol(ReceivedData);
 	ParameterSize = (EndPosition - 1) - StartPosition + 1;
 	strncpy(Server.Players[ClientIndex].UserName, ReceivedData + StartPosition, ParameterSize);
-	Server.Players[ClientIndex].UserName[EndPosition] = '\0';
+	Server.Players[ClientIndex].UserName[ParameterSize] = '\0';
 	free(ReceivedData);
 	char TempMessage[MESSAGE_LENGTH];
 	sprintf(TempMessage, "Custom message: Received NEW_USER_REQUEST from Client %d, UserName %s.\n",
@@ -154,7 +154,6 @@ void UpdateNumberOfConnectedUsers() {
 	}
 	Server.NumberOfConnectedUsers++;
 	if (Server.NumberOfConnectedUsers == 2) {
-		//CloseOneSocket(Server.ListeningSocket, Server.LogFilePtr); // don't listen to more clients untill next game // todo
 		Server.GameStatus = Started; // todo verify that here.
 	}
 	if (ReleaseOneSemaphore(Server.NumberOfConnectedUsersSemaphore) == FALSE) { // to signal to ConnectUsersThread
@@ -354,6 +353,11 @@ void CheckIfGameEnded() {
 		Sleep(SEND_MESSAGES_WAIT); // let turn message pass
 		HandleGameEndedMessage(OWon, XWon, BoardIsFull);
 		Server.GameStatus = Ended;
+		if (TerminateThread(Server.ConnectUsersThreadHandle, WAIT_OBJECT_0) == FALSE) { // reset for next game
+			WriteToLogFile(Server.LogFilePtr, "Custom message: Error when terminating ConnectUsersThreadHandle.\n");
+			CloseSocketsAndThreads();
+			exit(ERROR_CODE);
+		}
 	}
 }
 

@@ -58,15 +58,17 @@ void InitServerForNewGame() {
 	int ClientIndex = 0;
 	for (; ClientIndex < NUMBER_OF_CLIENTS; ClientIndex++) {
 		Server.Players[ClientIndex].PlayerType = None;
+		strcpy(Server.Players[ClientIndex].UserName, "");
 	}
 }
 
 void HandleServer() {
 	DWORD wait_code;
-	
 	int GameIndex = 0;
+	
+	CreateSocketBindAndListen();
+
 	for (; GameIndex < NUMBER_OF_GAMES; GameIndex++) {
-		CreateSocketBindAndListen();
 		InitServerForNewGame();
 		HandleConnectToClients();
 

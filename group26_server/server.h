@@ -7,7 +7,7 @@
 
 #define SERVER_ADDRESS_STR "127.0.0.1"
 #define NUMBER_OF_CLIENTS 2
-#define NUMBER_OF_GAMES 1 // todo
+#define NUMBER_OF_GAMES INFINITE // todo
 #define BINDING_SUCCEEDED 0
 #define LISTEN_SUCCEEDED 0
 
@@ -27,7 +27,7 @@ typedef struct _ServerProperties {
 	////// sockets
 	SOCKET ListeningSocket; // the socket that is listening to client connections
 	SOCKADDR_IN ListeningSocketService;
-	SOCKET ClientsSockets[NUMBER_OF_CLIENTS]; // the sockets that are connected to each client
+	SOCKET ClientsSockets[NUMBER_OF_CLIENTS + 1]; // the sockets that are connected to each client. extra one for declining more clients.
 
 	////// threads
 	HANDLE ConnectUsersThreadHandle; // thread handle for connecting two users

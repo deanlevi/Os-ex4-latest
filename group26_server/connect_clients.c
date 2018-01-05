@@ -13,7 +13,7 @@ void HandleConnectToClients() {
 	DWORD wait_code;
 	int ClientIndex = 0;
 	DWORD TimeToWait;
-	for (; ClientIndex < NUMBER_OF_CLIENTS; ClientIndex++) { // connect each client with different waiting time
+	for (; ClientIndex < NUMBER_OF_CLIENTS + 1; ClientIndex++) { // connect each client with different waiting time
 		Server.ConnectUsersThreadHandle = CreateThreadSimple((LPTHREAD_START_ROUTINE)ConnectToClientsThread,
 															 &Server.Players[ClientIndex].ClientIndex,
 															 &Server.ConnectUsersThreadID,
@@ -37,32 +37,54 @@ void HandleConnectToClients() {
 
 void WINAPI ConnectToClientsThread(LPVOID lpParam) {
 	int *ClientIndex = (int*)lpParam;
-	while (Server.NumberOfConnectedUsers <= *ClientIndex) { // while clients are declined
-		Server.ClientsSockets[*ClientIndex] = accept(Server.ListeningSocket, NULL, NULL);
-		if (Server.WaitingForClientsTimedOut) {
-			break;
+	if (Server.NumberOfConnectedUsers < NUMBER_OF_CLIENTS) { // for first two clients
+		while (Server.NumberOfConnectedUsers <= *ClientIndex) { // while clients are declined
+			Server.ClientsSockets[*ClientIndex] = accept(Server.ListeningSocket, NULL, NULL);
+			if (Server.WaitingForClientsTimedOut) {
+				break;
+			}
+			if (Server.ClientsSockets[*ClientIndex] == INVALID_SOCKET) {
+				char ErrorMessage[MESSAGE_LENGTH];
+				sprintf(ErrorMessage, "Custom message: ConnectToClients failed to accept. Error Number is %d\n", WSAGetLastError());
+				WriteToLogFile(Server.LogFilePtr, ErrorMessage);
+				CloseSocketsAndThreads();
+				exit(ERROR_CODE);
+			}
+			Server.ClientsThreadHandle[*ClientIndex] = CreateThreadSimple((LPTHREAD_START_ROUTINE)TicTacToeGameThread,
+																		  &Server.Players[*ClientIndex].ClientIndex,
+																		  &Server.ClientsThreadID[*ClientIndex],
+																		   Server.LogFilePtr);
+			if (Server.ClientsThreadHandle[*ClientIndex] == NULL) {
+				CloseSocketsAndThreads();
+				exit(ERROR_CODE);
+			}
+			DWORD wait_code;
+			wait_code = WaitForSingleObject(Server.NumberOfConnectedUsersSemaphore, INFINITE); // wait for signal
+			if (WAIT_OBJECT_0 != wait_code) {
+				WriteToLogFile(Server.LogFilePtr, "Custom message: Error when waiting for NumberOfConnectedUsers semaphore.\n");
+				CloseSocketsAndThreads(); // todo check how to handle error by instructions
+				exit(ERROR_CODE);
+			}
 		}
-		if (Server.ClientsSockets[*ClientIndex] == INVALID_SOCKET) {
-			char ErrorMessage[MESSAGE_LENGTH];
-			sprintf(ErrorMessage, "Custom message: ConnectToClients failed to accept. Error Number is %d\n", WSAGetLastError());
-			WriteToLogFile(Server.LogFilePtr, ErrorMessage);
-			CloseSocketsAndThreads();
-			exit(ERROR_CODE);
-		}
-		Server.ClientsThreadHandle[*ClientIndex] = CreateThreadSimple((LPTHREAD_START_ROUTINE)TicTacToeGameThread,
-																	  &Server.Players[*ClientIndex].ClientIndex,
-																	  &Server.ClientsThreadID[*ClientIndex],
-																	   Server.LogFilePtr);
-		if (Server.ClientsThreadHandle[*ClientIndex] == NULL) {
-			CloseSocketsAndThreads();
-			exit(ERROR_CODE);
-		}
-		DWORD wait_code;
-		wait_code = WaitForSingleObject(Server.NumberOfConnectedUsersSemaphore, INFINITE); // wait for signal
-		if (WAIT_OBJECT_0 != wait_code) {
-			WriteToLogFile(Server.LogFilePtr, "Custom message: Error when waiting for NumberOfConnectedUsers semaphore.\n");
-			CloseSocketsAndThreads(); // todo check how to handle error by instructions
-			exit(ERROR_CODE);
+	}
+	else { // decline more clients
+		char *DeclineMessage = "NEW_USER_DECLINED\n";
+		int SendDataToServerReturnValue;
+		while (TRUE) {
+			Server.ClientsSockets[NUMBER_OF_CLIENTS] = accept(Server.ListeningSocket, NULL, NULL);
+			if (Server.ClientsSockets[NUMBER_OF_CLIENTS] == INVALID_SOCKET) {
+				char ErrorMessage[MESSAGE_LENGTH];
+				sprintf(ErrorMessage, "Custom message: ConnectToClients failed to accept. Error Number is %d\n", WSAGetLastError());
+				WriteToLogFile(Server.LogFilePtr, ErrorMessage);
+				CloseSocketsAndThreads();
+				exit(ERROR_CODE);
+			}
+			Sleep(SEND_MESSAGES_WAIT); // to let new client send request before declining
+			SendDataToServerReturnValue = SendData(Server.ClientsSockets[NUMBER_OF_CLIENTS], DeclineMessage, Server.LogFilePtr);
+			if (SendDataToServerReturnValue == ERROR_CODE) {
+				CloseSocketsAndThreads();
+				exit(ERROR_CODE);
+			}
 		}
 	}
 }
