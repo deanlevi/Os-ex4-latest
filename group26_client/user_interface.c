@@ -2,7 +2,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
 
 #include "user_interface.h"
 
@@ -18,9 +17,9 @@ void WINAPI UserInterfaceThread() {
 			break; // finished communication
 		}
 		scanf("%s", UserInput);
-		if (strcmp(Client.MessageToSendToServer, "FINISHED") == 0) { // if finished
+		/*if (strcmp(Client.MessageToSendToServer, "FINISHED") == 0) { // if finished
 			break; // finished communication
-		}
+		}*/
 		HandleInputFromUser(UserInput);
 	}
 }
@@ -56,10 +55,11 @@ void HandleInputFromUser(char *UserInput) {
 	}
 	else if (strcmp(UserInput, "exit") == 0) {
 		strcpy(Client.MessageToSendToServer, "FINISHED");
+		Client.GotExitFromUser = true;
 		shutdown(Client.Socket, SD_BOTH);
 	}
 	else {
-		// todo
+		OutputMessageToWindowAndLogFile(Client.LogFilePtr, "Error: Illegal command\n");
 		NeedToReleaseSendToServerSemaphore = false;
 	}
 	if (NeedToReleaseSendToServerSemaphore) {

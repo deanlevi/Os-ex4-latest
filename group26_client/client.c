@@ -29,6 +29,7 @@ void InitClient(char *argv[]) {
 	Client.UserInterfaceSemaphore = NULL;
 	Client.SendToServerSemaphore = NULL;
 	Client.PlayerType = None;
+	Client.GotExitFromUser = false;
 	InitLogFile(Client.LogFilePtr);
 }
 
@@ -65,12 +66,12 @@ void ConnectToServer() {
 
 	ConnectReturnValue = connect(Client.Socket, (SOCKADDR*)&Client.SocketService, sizeof(Client.SocketService));
 	if (ConnectReturnValue == SOCKET_ERROR) {
-		sprintf(ConnectMessage, "Custom message: Failed connecting to server on %s:%d. Exiting.\n", Client.ServerIP, Client.ServerPortNum);
-		WriteToLogFile(Client.LogFilePtr, ConnectMessage);
+		sprintf(ConnectMessage, "Failed connecting to server on %s:%d. Exiting.\n", Client.ServerIP, Client.ServerPortNum);
+		OutputMessageToWindowAndLogFile(Client.LogFilePtr, ConnectMessage);
 		CloseSocketAndThreads(); // todo check if add function to handle error
 		exit(ERROR_CODE);
 	}
-	sprintf(ConnectMessage, "Connected to server on %s:%d.\n", Client.ServerIP, Client.ServerPortNum);
+	sprintf(ConnectMessage, "Connected to server on %s:%d\n", Client.ServerIP, Client.ServerPortNum);
 	OutputMessageToWindowAndLogFile(Client.LogFilePtr, ConnectMessage);
 }
 

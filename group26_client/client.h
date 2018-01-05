@@ -1,6 +1,8 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+#include <stdbool.h>
+
 #include "../Shared/socket.h" // todo
 
 #define NUMBER_OF_THREADS_TO_HANDLE_CLIENT 3 // one for send, one for receive, one for user interface
@@ -26,6 +28,7 @@ typedef struct ClientProperties {
 	char *UserName; // todo why need to assume <= 30 ?
 	PlayerType PlayerType;
 	char MessageToSendToServer[MESSAGE_LENGTH]; // each time SendToServerSemaphore is signaled contains the message to send
+	bool GotExitFromUser;
 }ClientProperties;
 
 ClientProperties Client;

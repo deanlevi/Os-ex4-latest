@@ -209,9 +209,17 @@ void SendBoardView(int ClientIndex, bool IsBoardViewQuery) {
 void SendTurn(int ClientIndex, bool IsTurnSwitch) {
 	char TurnMessage[MESSAGE_LENGTH];
 	char *MessageType = (IsTurnSwitch) ? "TURN_SWITCH" : "GAME_STATE_REPLY";
-	char TypeOfPlayerWhoHasTurn = Server.Turn == X ? 'x' : 'o';
-	char *UserNameOfPlayerWhoHasTurn = Server.Turn == X ? Server.Players[0].UserName : Server.Players[1].UserName;
-	sprintf(TurnMessage, "%s:%s;%c\n", MessageType, UserNameOfPlayerWhoHasTurn, TypeOfPlayerWhoHasTurn);
+	if (Server.GameStatus == NotStarted && !IsTurnSwitch) {
+		sprintf(TurnMessage, "%s:Game has not started\n", MessageType); // todo check - not defined
+	}
+	else if (Server.GameStatus == Ended && !IsTurnSwitch) {
+		sprintf(TurnMessage, "%s:Error: Game has already ended\n", MessageType);
+	}
+	else {
+		char TypeOfPlayerWhoHasTurn = Server.Turn == X ? 'x' : 'o';
+		char *UserNameOfPlayerWhoHasTurn = Server.Turn == X ? Server.Players[0].UserName : Server.Players[1].UserName;
+		sprintf(TurnMessage, "%s:%s;%c\n", MessageType, UserNameOfPlayerWhoHasTurn, TypeOfPlayerWhoHasTurn);
+	}
 	int SendDataToServerReturnValue = SendData(Server.ClientsSockets[ClientIndex], TurnMessage, Server.LogFilePtr);
 	if (SendDataToServerReturnValue == ERROR_CODE) {
 		CloseSocketsAndThreads();
@@ -230,8 +238,8 @@ void HandleReceivedData(char *ReceivedData, int ClientIndex) {
 	else if (strncmp(ReceivedData, "USER_LIST_QUERY", USER_LIST_QUERY_SIZE) == 0) {
 		HandleUserListQuery(ClientIndex);
 	}
-	else if (strncmp(ReceivedData, "GAME_STATE_QUERY", GAME_STATE_QUERY_SIZE) == 0) { // todo - not in the instruction list !!
-		SendTurn(ClientIndex, false); // todo
+	else if (strncmp(ReceivedData, "GAME_STATE_QUERY", GAME_STATE_QUERY_SIZE) == 0) {
+		SendTurn(ClientIndex, false);
 	}
 	else if (strncmp(ReceivedData, "BOARD_VIEW_QUERY", BOARD_VIEW_QUERY_SIZE) == 0) {
 		SendBoardView(ClientIndex, true);
@@ -260,10 +268,7 @@ void HandlePlayRequest(int ClientIndex, char *ReceivedData) {
 	else if (Server.GameStatus == NotStarted) {
 		strcpy(PlayReply, "PLAY_DECLINED:Game has not started\n");
 	}
-	else if (RowIndex >= BOARD_SIZE || ColumnIndex >= BOARD_SIZE) {
-		strcpy(PlayReply, "PLAY_DECLINED:Illegal move\n");
-	}
-	else if (Server.Board[RowIndex][ColumnIndex] != None) {
+	else if (RowIndex >= BOARD_SIZE || ColumnIndex >= BOARD_SIZE || Server.Board[RowIndex][ColumnIndex] != None) {
 		strcpy(PlayReply, "PLAY_DECLINED:Illegal move\n");
 	}
 	else {
@@ -352,6 +357,7 @@ void HandleGameEndedMessage(bool OWon, bool XWon, bool BoardIsFull) {
 			exit(ERROR_CODE);
 		}
 	}
+	Sleep(START_MESSAGES_WAIT); // so server will send game ended message before closing connections
 	char TempMessage[MESSAGE_LENGTH];
 	sprintf(TempMessage, "Custom message: Sent %s.\n", GameEndedMessage);
 	WriteToLogFile(Server.LogFilePtr, TempMessage);
@@ -360,10 +366,12 @@ void HandleGameEndedMessage(bool OWon, bool XWon, bool BoardIsFull) {
 void HandleUserListQuery(int ClientIndex) {
 	char UserListReply[MESSAGE_LENGTH];
 	if (Server.NumberOfConnectedUsers == 2) {
-		sprintf(UserListReply, "USER_LIST_REPLY:Players: x:%s, o:%s\n", Server.Players[0].UserName, Server.Players[1].UserName);
+		//sprintf(UserListReply, "USER_LIST_REPLY:Players: x:%s, o:%s\n", Server.Players[0].UserName, Server.Players[1].UserName);
+		sprintf(UserListReply, "USER_LIST_REPLY:x;%s;o;%s\n", Server.Players[0].UserName, Server.Players[1].UserName);
 	}
 	else {
-		sprintf(UserListReply, "USER_LIST_REPLY:Players: x:%s\n", Server.Players[0].UserName);
+		//sprintf(UserListReply, "USER_LIST_REPLY:Players: x:%s\n", Server.Players[0].UserName);
+		sprintf(UserListReply, "USER_LIST_REPLY:x;%s\n", Server.Players[0].UserName);
 	}
 	int SendDataToServerReturnValue = SendData(Server.ClientsSockets[ClientIndex], UserListReply, Server.LogFilePtr);
 	if (SendDataToServerReturnValue == ERROR_CODE) {

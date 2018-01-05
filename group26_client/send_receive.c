@@ -2,7 +2,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
 
 #include "send_receive.h"
 
@@ -17,6 +16,7 @@ void HandleTurn(char *ReceivedData, bool IsTurnSwitch);
 void HandlePlayDeclined(char *ReceivedData);
 void HandleGameEnded(char *ReceivedData);
 void HandleUserListReply(char *ReceivedData);
+int FindNextParameterEnd(char *ReceivedData, bool *ReachedEndOfData, int *ParameterEndPosition);
 
 void WINAPI SendThread() {
 	int SendDataToServerReturnValue;
@@ -70,13 +70,20 @@ void WINAPI ReceiveThread() {
 			exit(ERROR_CODE);
 		}
 		if (strcmp(ReceivedData, "FINISHED") == 0) {
-			strcpy(Client.MessageToSendToServer, "FINISHED");
-			if (ReleaseOneSemaphore(Client.SendToServerSemaphore) == FALSE) { // signal sending thread to finish
-				WriteToLogFile(Client.LogFilePtr, "Custom message: SendThread - failed to release SendToServer semaphore.\n");
+			if (Client.GotExitFromUser) {
+				strcpy(Client.MessageToSendToServer, "FINISHED");
+				if (ReleaseOneSemaphore(Client.SendToServerSemaphore) == FALSE) { // signal sending thread to finish
+					WriteToLogFile(Client.LogFilePtr, "Custom message: SendThread - failed to release SendToServer semaphore.\n");
+					CloseSocketAndThreads();
+					exit(ERROR_CODE); // todo exits like this when game ends because server disconnects
+				}
+				break;
+			}
+			else { // server disconnected - need to exit now
+				OutputMessageToWindowAndLogFile(Client.LogFilePtr, "Server disconnected. Exiting.\n");
 				CloseSocketAndThreads();
 				exit(ERROR_CODE);
 			}
-			break; // finished communication
 		}
 		HandleReceivedData(ReceivedData);
 	}
@@ -130,7 +137,7 @@ void HandleReceivedData(char *ReceivedData) {
 
 void HandleNewUserAccept(char *ReceivedData) {
 	if (strncmp(ReceivedData, "NEW_USER_DECLINED", NEW_USER_ACCEPTED_OR_DECLINED_SIZE) == 0) {
-		WriteToLogFile(Client.LogFilePtr, "Request to join was refused.\n");
+		OutputMessageToWindowAndLogFile(Client.LogFilePtr, "Request to join was refused.\n");
 		free(ReceivedData);
 		CloseSocketAndThreads();
 		exit(ERROR_CODE);
@@ -175,18 +182,33 @@ void HandleBoardView(char *ReceivedData, bool IsBoardViewQuery) {
 
 void HandleTurn(char *ReceivedData, bool IsTurnSwitch) {
 	char TurnMessage[MESSAGE_LENGTH];
-	char UserName[USER_NAME_LENGTH];
-	int UserNameStartPosition = (IsTurnSwitch) ? TURN_SWITCH_SIZE : GAME_STATE_REPLY_SIZE;
-	int UserNameEndPosition = UserNameStartPosition;
-	while (ReceivedData[UserNameEndPosition] != ';') {
-		UserNameEndPosition++;
+	char FirstParameter[USER_NAME_LENGTH];
+	int MessageStartPosition = (IsTurnSwitch) ? TURN_SWITCH_SIZE : GAME_STATE_REPLY_SIZE;
+	
+	if (strncmp(ReceivedData + MessageStartPosition, "Error: ", 7) == 0) {
+		int EndPosition = FindEndOfDataSymbol(ReceivedData);
+		strncpy(TurnMessage, ReceivedData + MessageStartPosition, EndPosition - MessageStartPosition);
+		TurnMessage[EndPosition - MessageStartPosition] = '\0';
+		strcat(TurnMessage, "\n");
+		OutputMessageToWindowAndLogFile(Client.LogFilePtr, TurnMessage);
 	}
-	int UserNameLength = UserNameEndPosition - UserNameStartPosition;
-	strncpy(UserName, ReceivedData + UserNameStartPosition, UserNameLength);
-	UserName[UserNameLength] = '\0';
-	char Symbol = ReceivedData[UserNameEndPosition + 1];
-	sprintf(TurnMessage, "%s's turn (%c)\n", UserName, Symbol);
-	OutputMessageToWindowAndLogFile(Client.LogFilePtr, TurnMessage);
+	else {
+		int MessageEndPosition = MessageStartPosition;
+		while (ReceivedData[MessageEndPosition] != ';' && ReceivedData[MessageEndPosition] != '\n') {
+			MessageEndPosition++;
+		}
+		int MessageLength = MessageEndPosition - MessageStartPosition;
+		strncpy(FirstParameter, ReceivedData + MessageStartPosition, MessageLength);
+		FirstParameter[MessageLength] = '\0';
+		if (ReceivedData[MessageEndPosition] == ';') {
+			char Symbol = ReceivedData[MessageEndPosition + 1];
+			sprintf(TurnMessage, "%s's turn (%c)\n", FirstParameter, Symbol);
+		}
+		else {
+			sprintf(TurnMessage, "%s\n", FirstParameter);
+		}
+		OutputMessageToWindowAndLogFile(Client.LogFilePtr, TurnMessage);
+	}
 }
 
 void HandlePlayDeclined(char *ReceivedData) {
@@ -214,11 +236,44 @@ void HandleGameEnded(char *ReceivedData) {
 }
 
 void HandleUserListReply(char *ReceivedData) {
-	char UserListReply[MESSAGE_LENGTH];
-	int UserListReplyEndPosition = FindEndOfDataSymbol(ReceivedData);
-	strncpy(UserListReply, ReceivedData + USER_LIST_REPLY_SIZE, UserListReplyEndPosition - USER_LIST_REPLY_SIZE);
-	int TotalReplySize = UserListReplyEndPosition - USER_LIST_REPLY_SIZE;
-	UserListReply[TotalReplySize] = '\0';
+	char UserListReply[MESSAGE_LENGTH] = "Players: ";
+	int IndexInUserListReply = 9; // size of "Players: "
+	int ParameterStartPosition = USER_LIST_REPLY_SIZE;
+	bool ReachedEndOfData = false;
+	int ParameterEndPosition = ParameterStartPosition;
+	UserListReply[IndexInUserListReply] = ReceivedData[ParameterStartPosition]; // get first symbol
+	IndexInUserListReply++;
+	UserListReply[IndexInUserListReply] = ':';
+	IndexInUserListReply++;
+	UserListReply[IndexInUserListReply] = '\0';
+	ParameterEndPosition += 2;
+	ParameterStartPosition = ParameterEndPosition;
+
+	FindNextParameterEnd(ReceivedData, &ReachedEndOfData, &ParameterEndPosition);
+	strncat(UserListReply, ReceivedData + ParameterStartPosition, ParameterEndPosition - ParameterStartPosition); // get first username
+	if (!ReachedEndOfData) {
+		strcat(UserListReply, ", ");
+		IndexInUserListReply += (ParameterEndPosition - ParameterStartPosition + 2);
+		ParameterEndPosition++;
+		UserListReply[IndexInUserListReply] = ReceivedData[ParameterEndPosition]; // get second symbol
+		IndexInUserListReply++;
+		UserListReply[IndexInUserListReply] = ':';
+		IndexInUserListReply++;
+		UserListReply[IndexInUserListReply] = '\0';
+		ParameterEndPosition += 2;
+		ParameterStartPosition = ParameterEndPosition;
+		FindNextParameterEnd(ReceivedData, &ReachedEndOfData, &ParameterEndPosition);
+		strncat(UserListReply, ReceivedData + ParameterStartPosition, ParameterEndPosition - ParameterStartPosition); // get second username
+	}
 	strcat(UserListReply, "\n");
 	OutputMessageToWindowAndLogFile(Client.LogFilePtr, UserListReply);
+}
+
+int FindNextParameterEnd(char *ReceivedData, bool *ReachedEndOfData, int *ParameterEndPosition) {
+	while (ReceivedData[*ParameterEndPosition] != ';' && ReceivedData[*ParameterEndPosition] != '\n') {
+		(*ParameterEndPosition)++;
+	}
+	if (ReceivedData[*ParameterEndPosition] == '\n') {
+		*ReachedEndOfData = true;
+	}
 }
