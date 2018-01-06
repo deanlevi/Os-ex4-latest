@@ -1,3 +1,10 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - general_functions_and_definitions.h
+Description - declaration of general functions of send/receive and closing sockets used by both server and client.
+			  also needed defines.
+*/
 #ifndef SOCKET_H
 #define SOCKET_H
 

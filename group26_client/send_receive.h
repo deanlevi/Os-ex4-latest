@@ -1,3 +1,9 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - client.h
+Description - declaration of the send/receive threads functions and needed defines.
+*/
 #ifndef SEND_RECEIVE_H
 #define SEND_RECEIVE_H
 

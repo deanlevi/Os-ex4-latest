@@ -1,3 +1,10 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - server.h, connect_clients.h, tic_tac_toe.h
+Description - implementation of server operation - initiating server, creating and handling sockets, handling games
+			  and closing all used resources when server finishes.
+*/
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -8,13 +15,60 @@
 #include "connect_clients.h"
 #include "tic_tac_toe.h"
 
+/*
+Parameters - argv: contains the log file path and port to connect to.
+Returns - none.
+Description - initialize the database of the server.
+*/
 void InitServer(char *argv[]);
+
+/*
+Parameters - none.
+Returns - none.
+Description - initialize the database of the server for new game when current game ends.
+*/
 void InitServerForNewGame();
+
+/*
+Parameters - none.
+Returns - none.
+Description - runs the game for the defined number of games.
+*/
 void HandleServer();
+
+/*
+Parameters - none.
+Returns - none.
+Description - handles the creation, binding and listening of the socket that listens for connections.
+*/
 void CreateSocketBindAndListen();
+
+/*
+Parameters - none.
+Returns - none.
+Description - binding of the socket that listens for connections.
+*/
 void SetSockAddrInAndBind();
+
+/*
+Parameters - none.
+Returns - none.
+Description - setting the socket that listens for connections to listen.
+*/
 void SetSocketToListen();
+
+/*
+Parameters - none.
+Returns - none.
+Description - clears the game board.
+*/
 void InitBoard();
+
+/*
+Parameters - none.
+Returns - none.
+Description - closes all used resources when server program finishes / an error occurs.
+*/
 void CloseSocketsAndThreads();
 
 void InitServer(char *argv[]) {

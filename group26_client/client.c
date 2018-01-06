@@ -1,3 +1,10 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - client.h, send_receive.h, user_interface.h
+Description - implementation of client operation - initiating client, connecting to server, creating and starting
+			  send/receive/user interface threads, and closing all used resources when program finishes.
+*/
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -8,10 +15,39 @@
 #include "send_receive.h"
 #include "user_interface.h"
 
+/*
+Parameters - argv: contains the log file path, port to connect to and the servers ip.
+Returns - none.
+Description - initialize the database of the client.
+*/
 void InitClient(char *argv[]);
+
+/*
+Parameters - none.
+Returns - none.
+Description - connects to server and runs the client's threads.
+*/
 void HandleClient();
+
+/*
+Parameters - none.
+Returns - none.
+Description - sets the client socket and connects to server.
+*/
 void ConnectToServer();
+
+/*
+Parameters - none.
+Returns - none.
+Description - creates the thread handles and semaphores used by the client.
+*/
 void CreateThreadsAndSemaphores();
+
+/*
+Parameters - none.
+Returns - none.
+Description - closes all used resources when client program finishes / an error occurs.
+*/
 void CloseSocketAndThreads();
 
 

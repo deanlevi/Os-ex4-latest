@@ -1,3 +1,9 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - client.h
+Description - declaration of the user interface thread function and needed define.
+*/
 #ifndef USER_INTERFACE_H
 #define USER_INTERFACE_H
 

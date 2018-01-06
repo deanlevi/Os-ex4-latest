@@ -1,3 +1,9 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - general_functions_and_definitions.h
+Description - implementation of general functions of send/receive and closing sockets used by both server and client.
+*/
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdlib.h>
@@ -7,9 +13,32 @@
 
 #include "socket.h"
 
+/*
+Parameters - none.
+Returns - a new created socket.
+Description - creates one socket and returns it.
+*/
 SOCKET CreateOneSocket();
+
+/*
+Parameters - Socket: the socket that is sending, DataToSend: the data to send, LogFilePathPtr: log file path in case of an error.
+Returns - SUCCESS_CODE if sending succeeded, else ERROR_CODE.
+Description - sending data through socket.
+*/
 int SendData(SOCKET Socket, char *DataToSend, char *LogFilePathPtr);
+
+/*
+Parameters - Socket: the socket that is receiving, LogFilePathPtr: log file path in case of an error.
+Returns - the received data.
+Description - receive data through the socket and return it.
+*/
 char *ReceiveData(SOCKET Socket, char *LogFilePathPtr);
+
+/*
+Parameters - Socket: the socket to be closed, LogFilePathPtr: log file path in case of an error.
+Returns - none.
+Description - closing one socket.
+*/
 void CloseOneSocket(SOCKET Socket, char *LogFilePathPtr);
 
 

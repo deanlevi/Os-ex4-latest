@@ -1,3 +1,9 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - send_receive.h
+Description - implementation of the send/receive threads and its related functions.
+*/
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdlib.h>
@@ -5,17 +11,90 @@
 
 #include "send_receive.h"
 
+/*
+Parameters - none.
+Returns - none.
+Description - the thread function that handles sending data to server.
+*/
 void WINAPI SendThread();
+
+/*
+Parameters - none.
+Returns - none.
+Description - waits until signaled that a new data is ready for sending to server.
+*/
 void WaitForSendToServerSemaphore();
+
+/*
+Parameters - none.
+Returns - none.
+Description - creates and sends new user request message to server.
+*/
 void HandleNewUserRequest();
+
+/*
+Parameters - none.
+Returns - none.
+Description - the thread function that handles received data from server.
+*/
 void WINAPI ReceiveThread();
+
+/*
+Parameters - ReceivedData: the data that was received from server.
+Returns - none.
+Description - checks the request type received from the server and handles it accordingly.
+*/
 void HandleReceivedData(char *ReceivedData);
+
+/*
+Parameters - ReceivedData: the data that was received from server.
+Returns - none.
+Description - parses and updates client database accordingly. also prints as instructed to client screen.
+*/
 void HandleNewUserAccept(char *ReceivedData);
+
+/*
+Parameters - ReceivedData: the data that was received from server, IsBoardViewQuery: if need to parse board view query or board view.
+Returns - none.
+Description - prints as instructed the game board to client screen.
+*/
 void HandleBoardView(char *ReceivedData, bool IsBoardViewQuery);
+
+/*
+Parameters - ReceivedData: the data that was received from server, IsTurnSwitch: if need to parse turn switch or game state reply.
+Returns - none.
+Description - prints as instructed to client screen.
+*/
 void HandleTurn(char *ReceivedData, bool IsTurnSwitch);
+
+/*
+Parameters - ReceivedData: the data that was received from server.
+Returns - none.
+Description - prints as instructed the error message to client screen.
+*/
 void HandlePlayDeclined(char *ReceivedData);
+
+/*
+Parameters - ReceivedData: the data that was received from server.
+Returns - none.
+Description - handle game ended message and prints as instructed to client screen.
+*/
 void HandleGameEnded(char *ReceivedData);
+
+/*
+Parameters - ReceivedData: the data that was received from server.
+Returns - none.
+Description - handle user list reply message and prints as instructed to client screen.
+*/
 void HandleUserListReply(char *ReceivedData);
+
+/*
+Parameters - ReceivedData: the data that was received from server.
+			 ReachedEndOfData (output parameter): signals if reached ; or \n.
+			 ParameterEndPosition (output parameter): signals the end position of the parsed parameter.
+Returns - none.
+Description - searches and updates the end position of the parsed parameter in ReceivedData.
+*/
 void FindNextParameterEnd(char *ReceivedData, bool *ReachedEndOfData, int *ParameterEndPosition);
 
 void WINAPI SendThread() {
@@ -78,7 +157,7 @@ void WINAPI ReceiveThread() {
 				if (ReleaseOneSemaphore(Client.SendToServerSemaphore) == FALSE) { // signal sending thread to finish
 					WriteToLogFile(Client.LogFilePtr, "Custom message: ReceiveThread - failed to release SendToServer semaphore.\n");
 					CloseSocketAndThreads();
-					exit(ERROR_CODE); // todo exits like this when game ends because server disconnects
+					exit(ERROR_CODE);
 				}
 				if (Client.ThreadHandles[2] != NULL) { // if user interface is active
 					if (TerminateThread(Client.ThreadHandles[2], WAIT_OBJECT_0) == FALSE) {
@@ -129,8 +208,7 @@ void HandleReceivedData(char *ReceivedData) {
 	else if (strncmp(ReceivedData, "USER_LIST_REPLY:", USER_LIST_REPLY_SIZE) == 0) {
 		HandleUserListReply(ReceivedData);
 	}
-	else if (strncmp(ReceivedData, "GAME_STATE_REPLY:", GAME_STATE_REPLY_SIZE) == 0) { // todo check - not in instruction list !!
-																					   // todo - same as TURN_SWITCH ?
+	else if (strncmp(ReceivedData, "GAME_STATE_REPLY:", GAME_STATE_REPLY_SIZE) == 0) {
 		HandleTurn(ReceivedData, false);
 	}
 	else {

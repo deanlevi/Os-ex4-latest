@@ -11,41 +11,8 @@ Received from server: BOARD_VIEW:| | | |           | | | |           | | | |
 isp_student0's turn (x)
 Received from server: TURN_SWITCH:isp_student0;x
 
-Received from server: BOARD_VIEW:| | | |           | | | |           |x| | |
+Sent to server: USER_LIST_QUERY
 
-isp_student1's turn (o)
-Received from server: TURN_SWITCH:isp_student1;o
-
-Sent to server: PLAY_REQUEST:2;2
-
-Well played
-Received from server: PLAY_ACCEPTED
-
-Received from server: BOARD_VIEW:| | | |           | |o| |           |x| | |
-
-isp_student0's turn (x)
-Received from server: TURN_SWITCH:isp_student0;x
-
-Received from server: BOARD_VIEW:| | | |           | |o| |           |x|x| |
-
-isp_student1's turn (o)
-Received from server: TURN_SWITCH:isp_student1;o
-
-Sent to server: PLAY_REQUEST:3;3
-
-Well played
-Received from server: PLAY_ACCEPTED
-
-Received from server: BOARD_VIEW:| | |o|           | |o| |           |x|x| |
-
-isp_student0's turn (x)
-Received from server: TURN_SWITCH:isp_student0;x
-
-Received from server: BOARD_VIEW:| | |o|           | |o| |           |x|x|x|
-
-isp_student1's turn (o)
-Received from server: TURN_SWITCH:isp_student1;o
-
-Game ended. The winner is isp_student0!
-Received from server: GAME_ENDED:isp_student0
+Players: x:isp_student0, o:isp_student1
+Received from server: USER_LIST_REPLY:x;isp_student0;o;isp_student1
 

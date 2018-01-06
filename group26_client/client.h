@@ -1,3 +1,11 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - socket.h
+Description - declaration of global functions of the client.
+			  defining the structures that the client uses in the programs.
+			  creating the Client instance of ClientProperties as a general database variable with all needed information.
+*/
 #ifndef CLIENT_H
 #define CLIENT_H
 

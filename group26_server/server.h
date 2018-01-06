@@ -1,3 +1,11 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - socket.h
+Description - declaration of global functions of the server.
+			  defining the structures that the server uses in the programs.
+			  creating the Server instance of ServerProperties as a general database variable with all needed information.
+*/
 #ifndef SERVER_H
 #define SERVER_H
 

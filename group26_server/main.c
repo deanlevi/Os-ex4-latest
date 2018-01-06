@@ -1,3 +1,10 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - server.h
+Description - main file that initiates the server and its parameters, calls to handle server that starts the server and after
+			  the server finished closes all used sockets and thread handles.
+*/
 #include <stdio.h>
 
 #include "server.h"

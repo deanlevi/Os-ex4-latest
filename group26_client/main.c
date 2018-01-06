@@ -1,3 +1,10 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - client.h
+Description - main file that initiates the client and its parameters, calls to handle client that starts the client operation and after
+			  the client finished closes all used sockets and thread handles.
+*/
 #include <stdio.h>
 
 #include "client.h"

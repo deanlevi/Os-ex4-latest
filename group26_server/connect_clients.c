@@ -1,3 +1,9 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - connect_clients.h, tic_tac_toe.h
+Description - implementation of the functions that are used to connect clients to the server and handling clients requests.
+*/
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdlib.h>
@@ -6,7 +12,18 @@
 #include "connect_clients.h"
 #include "tic_tac_toe.h"
 
+/*
+Parameters - none.
+Returns - none.
+Description - handle the connection of clients to the server.
+*/
 void HandleConnectToClients();
+
+/*
+Parameters - lpParam: pointer to ClientIndex.
+Returns - none.
+Description - the thread connecting clients to the server and declining clients after the first two connected.
+*/
 void WINAPI ConnectToClientsThread(LPVOID lpParam);
 
 void HandleConnectToClients() {
@@ -62,7 +79,7 @@ void WINAPI ConnectToClientsThread(LPVOID lpParam) {
 			wait_code = WaitForSingleObject(Server.NumberOfConnectedUsersSemaphore, INFINITE); // wait for signal
 			if (WAIT_OBJECT_0 != wait_code) {
 				WriteToLogFile(Server.LogFilePtr, "Custom message: Error when waiting for NumberOfConnectedUsers semaphore.\n");
-				CloseSocketsAndThreads(); // todo check how to handle error by instructions
+				CloseSocketsAndThreads();
 				exit(ERROR_CODE);
 			}
 		}

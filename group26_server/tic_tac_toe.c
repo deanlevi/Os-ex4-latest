@@ -1,3 +1,9 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - tic_tac_toe.h
+Description - implementation of all in-game related operations of the server - game management and clients handling.
+*/
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>
@@ -5,17 +11,89 @@
 
 #include "tic_tac_toe.h"
 
+/*
+Parameters - lpParam: pointer to ClientIndex.
+Returns - none.
+Description - handles the entire operation of the server during the game.
+*/
 void WINAPI TicTacToeGameThread(LPVOID lpParam);
+
+/*
+Parameters - ClientIndex: the index of the client.
+Returns - true if the new user request was accepted and false if declined.
+Description - check if new user is accepted and send reply to client.
+*/
 bool HandleNewUserRequestAndAccept(int ClientIndex);
+
+/*
+Parameters - ClientIndex: the index of the client, ReceivedData: the request that was received from client.
+Returns - none.
+Description - parse new user request sent from client.
+*/
 void ParseNewUserRequest(char *ReceivedData, int ClientIndex);
+
+/*
+Parameters - none.
+Returns - none.
+Description - when new user is accepted update the number of connected users.
+			  if two users are connected signal that game has started.
+*/
 void UpdateNumberOfConnectedUsers();
+
+/*
+Parameters - ClientIndex: the index of the client.
+Returns - none.
+Description - when game starts - send game started, board view, and turn switch messages to the client.
+*/
 void SendGameStartedBoardViewAndTurnSwitch(int ClientIndex);
+
+/*
+Parameters - ClientIndex: the index of the client, IsBoardViewQuery: if need to send board view query or board view.
+Returns - none.
+Description - sends to client board view query if IsBoardViewQuery = true, else sends board view.
+*/
 void SendBoardView(int ClientIndex, bool IsBoardViewQuery);
+
+/*
+Parameters - ClientIndex: the index of the client, IsTurnSwitch: if need to send turn switch or game state reply.
+Returns - none.
+Description - sends to client turn switch if IsTurnSwitch = true, else sends game state reply.
+*/
 void SendTurn(int ClientIndex, bool IsTurnSwitch);
+
+/*
+Parameters - ClientIndex: the index of the client, ReceivedData: the data that was received from client.
+Returns - none.
+Description - checks the request type received from the client and handles it accordingly.
+*/
 void HandleReceivedData(char *ReceivedData, int ClientIndex);
+
+/*
+Parameters - ClientIndex: the index of the client, ReceivedData: the data that was received from client.
+Returns - none.
+Description - handles play request from client.
+*/
 void HandlePlayRequest(int ClientIndex, char *ReceivedData);
+
+/*
+Parameters - none.
+Returns - none.
+Description - checks if game ended and updates server accordingly.
+*/
 void CheckIfGameEnded();
+
+/*
+Parameters - OWon: signals if O won, XWon: signals if X won, BoardIsFull: signals if board is full and it's a tie.
+Returns - none.
+Description - when game is ended, handles the game ended message to send to clients according to game's result.
+*/
 void HandleGameEndedMessage(bool OWon, bool XWon, bool BoardIsFull);
+
+/*
+Parameters - ClientIndex: the index of the client.
+Returns - none.
+Description - handle user list reply message to send to client.
+*/
 void HandleUserListQuery(int ClientIndex);
 
 void WINAPI TicTacToeGameThread(LPVOID lpParam) {
@@ -47,11 +125,19 @@ void WINAPI TicTacToeGameThread(LPVOID lpParam) {
 		}
 		if (strcmp(ReceivedData, "FINISHED") == 0) {
 			Server.NumberOfConnectedUsers -= 1;
+			CloseOneSocket(Server.ClientsSockets[*ClientIndexPtr], Server.LogFilePtr); // close client socket
 			break; // finished communication
 		}
 		if (Server.NumberOfConnectedUsers < NUMBER_OF_CLIENTS && Server.GameStatus == Started) {
 			OutputMessageToWindowAndLogFile(Server.LogFilePtr, "Player disconnected. Exiting.\n");
 			shutdown(Server.ClientsSockets[*ClientIndexPtr], SD_BOTH);
+			CloseOneSocket(Server.ClientsSockets[*ClientIndexPtr], Server.LogFilePtr); // close client socket
+			Server.GameStatus = Ended;
+			if (TerminateThread(Server.ConnectUsersThreadHandle, WAIT_OBJECT_0) == FALSE) { // reset for next game
+				WriteToLogFile(Server.LogFilePtr, "Custom message: Error when terminating ConnectUsersThreadHandle.\n");
+				CloseSocketsAndThreads();
+				exit(ERROR_CODE);
+			}
 			break;
 		}
 		wait_code = WaitForSingleObject(Server.ServerPropertiesUpdatesMutex, INFINITE); // wait for Mutex access
@@ -154,7 +240,7 @@ void UpdateNumberOfConnectedUsers() {
 	}
 	Server.NumberOfConnectedUsers++;
 	if (Server.NumberOfConnectedUsers == 2) {
-		Server.GameStatus = Started; // todo verify that here.
+		Server.GameStatus = Started;
 	}
 	if (ReleaseOneSemaphore(Server.NumberOfConnectedUsersSemaphore) == FALSE) { // to signal to ConnectUsersThread
 		WriteToLogFile(Server.LogFilePtr, "Custom message: failed to release NumberOfConnectedUsers semaphore.\n");
@@ -225,7 +311,7 @@ void SendTurn(int ClientIndex, bool IsTurnSwitch) {
 	char TurnMessage[MESSAGE_LENGTH];
 	char *MessageType = (IsTurnSwitch) ? "TURN_SWITCH" : "GAME_STATE_REPLY";
 	if (Server.GameStatus == NotStarted && !IsTurnSwitch) {
-		sprintf(TurnMessage, "%s:Game has not started\n", MessageType); // todo check - not defined
+		sprintf(TurnMessage, "%s:Game has not started\n", MessageType);
 	}
 	else if (Server.GameStatus == Ended && !IsTurnSwitch) {
 		sprintf(TurnMessage, "%s:Error: Game has already ended\n", MessageType);

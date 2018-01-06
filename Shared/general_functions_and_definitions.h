@@ -1,3 +1,9 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - none
+Description - declaration of general functions and defines used by both server and client.
+*/
 #ifndef GENERAL_FUNCTIONS_AND_DEFINITIONS_H
 #define GENERAL_FUNCTIONS_AND_DEFINITIONS_H
 

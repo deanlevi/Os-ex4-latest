@@ -1,3 +1,9 @@
+/*
+Author - Dean Levi 302326640
+Project - Ex4
+Using - user_interface.h
+Description - implementation of the user interface thread and its related functions.
+*/
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <stdlib.h>
@@ -5,8 +11,26 @@
 
 #include "user_interface.h"
 
+
+/*
+Parameters - none.
+Returns - none.
+Description - the thread function that handles user interface.
+*/
 void WINAPI UserInterfaceThread();
+
+/*
+Parameters - none.
+Returns - none.
+Description - waits until user is accepted and user interface is opened to user.
+*/
 void WaitForUserInterfaceSemaphore();
+
+/*
+Parameters - none.
+Returns - none.
+Description - handles input from user and signals to sending thread when client makes a request.
+*/
 void HandleInputFromUser(char *UserInput);
 
 void WINAPI UserInterfaceThread() {
@@ -17,9 +41,6 @@ void WINAPI UserInterfaceThread() {
 			break; // finished communication
 		}
 		scanf("%s", UserInput);
-		/*if (strcmp(Client.MessageToSendToServer, "FINISHED") == 0) { // if finished
-			break; // finished communication
-		}*/
 		HandleInputFromUser(UserInput);
 	}
 }
