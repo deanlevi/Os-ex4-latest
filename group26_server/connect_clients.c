@@ -49,6 +49,9 @@ void HandleConnectToClients() {
 			exit(ERROR_CODE);
 		}
 		CloseOneThreadHandle(Server.ConnectUsersThreadHandle, Server.LogFilePtr); // close thread handle
+		if (Server.FirstClientDisconnectedBeforeGameStarted && ClientIndex == 1) {
+			ClientIndex-=2;
+		}
 	}
 }
 

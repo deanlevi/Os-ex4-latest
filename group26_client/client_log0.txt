@@ -13,4 +13,49 @@ Received from server: TURN_SWITCH:isp_student0;x
 
 Sent to server: USER_LIST_QUERY
 
-Server disconnected. Exiting.
+Players: x:isp_student0
+Received from server: USER_LIST_REPLY:x;isp_student0
+
+Well played
+Received from server: PLAY_ACCEPTED
+
+Received from server: BOARD_VIEW:| | | |           | | | |           |x| | |
+
+Sent to server: PLAY_REQUEST:1;1
+
+isp_student1's turn (o)
+Received from server: TURN_SWITCH:isp_student1;o
+
+Received from server: BOARD_VIEW:| | | |           | | | |           |x|o| |
+
+isp_student0's turn (x)
+Received from server: TURN_SWITCH:isp_student0;x
+
+Well played
+r: PLAY_REQUEST:2;2
+
+Received from server: PLAY_ACCEPTED
+
+Received from server: BOARD_VIEW:| | | |           | |x| |           |x|o| |
+
+isp_student1's turn (o)
+Received from server: TURN_SWITCH:isp_student1;o
+
+Received from server: BOARD_VIEW:| | | |           |o|x| |           |x|o| |
+
+isp_student0's turn (x)
+Received from server: TURN_SWITCH:isp_student0;x
+
+Well played
+Received from server: PLAY_ACCEPTED
+
+Sent to server: PLAY_REQUEST:3;3
+
+Received from server: BOARD_VIEW:| | |x|           |o|x| |           |x|o| |
+
+isp_student1's turn (o)
+Received from server: TURN_SWITCH:isp_student1;o
+
+Game ended. The winner is isp_student0!
+Received from server: GAME_ENDED:isp_student0
+

@@ -109,6 +109,7 @@ void InitServerForNewGame() {
 	Server.NumberOfConnectedUsers = 0;
 	Server.Turn = X;
 	Server.GameStatus = NotStarted;
+	Server.FirstClientDisconnectedBeforeGameStarted = false;
 	int ClientIndex = 0;
 	for (; ClientIndex < NUMBER_OF_CLIENTS; ClientIndex++) {
 		Server.Players[ClientIndex].PlayerType = None;

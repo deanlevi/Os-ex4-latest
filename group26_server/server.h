@@ -56,6 +56,7 @@ typedef struct _ServerProperties {
 	PlayerType Board[BOARD_SIZE][BOARD_SIZE];
 	GameStatus GameStatus;
 	bool WaitingForClientsTimedOut;
+	bool FirstClientDisconnectedBeforeGameStarted;
 }ServerProperties;
 
 ServerProperties Server;

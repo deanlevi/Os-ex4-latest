@@ -94,7 +94,7 @@ char *ReceiveData(SOCKET Socket, char *LogFilePathPtr) {
 		NeedToReallocWholeBuffer = IndexInWholeReceivedBuffers + ReceivedBytes > SizeOfWholeReceivedBuffer;
 		if (NeedToReallocWholeBuffer) {
 			SizeOfWholeReceivedBuffer += MESSAGE_LENGTH;
-			WholeReceivedBuffer = (char*)realloc(WholeReceivedBuffer, SizeOfWholeReceivedBuffer);
+			WholeReceivedBuffer = (char*)realloc(WholeReceivedBuffer, sizeof(char)*SizeOfWholeReceivedBuffer);
 			if (WholeReceivedBuffer == NULL) {
 				OutputMessageToWindowAndLogFile(LogFilePathPtr, "Custom message: ReceiveData failed to allocate memory.\n");
 				return NULL;

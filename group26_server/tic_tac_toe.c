@@ -126,6 +126,14 @@ void WINAPI TicTacToeGameThread(LPVOID lpParam) {
 		if (strcmp(ReceivedData, "FINISHED") == 0) {
 			Server.NumberOfConnectedUsers -= 1;
 			CloseOneSocket(Server.ClientsSockets[*ClientIndexPtr], Server.LogFilePtr); // close client socket
+			if (Server.GameStatus == NotStarted) {
+				Server.FirstClientDisconnectedBeforeGameStarted = true;
+				if (TerminateThread(Server.ConnectUsersThreadHandle, WAIT_OBJECT_0) == FALSE) { // reset for new connect session
+					WriteToLogFile(Server.LogFilePtr, "Custom message: Error when terminating ConnectUsersThreadHandle.\n");
+					CloseSocketsAndThreads();
+					exit(ERROR_CODE);
+				}
+			}
 			break; // finished communication
 		}
 		if (Server.NumberOfConnectedUsers < NUMBER_OF_CLIENTS && Server.GameStatus == Started) {
