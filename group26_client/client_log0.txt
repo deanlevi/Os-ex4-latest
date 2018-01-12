@@ -1,57 +1,43 @@
 Connected to server on 127.0.0.1:8888
 Sent to server: NEW_USER_REQUEST:isp_student0
 
-Received from server: NEW_USER_ACCEPTED:x;1
-
-Game is on!
-Received from server: GAME_STARTED
-
-Received from server: BOARD_VIEW:| | | |           | | | |           | | | |
-
-isp_student0's turn (x)
-Received from server: TURN_SWITCH:isp_student0;x
-
-Sent to server: USER_LIST_QUERY
-
-Players: x:isp_student0
-Received from server: USER_LIST_REPLY:x;isp_student0
+Request to join was refused.
+Sent to server: PLAY_REQUEST:1;1
 
 Well played
 Received from server: PLAY_ACCEPTED
 
 Received from server: BOARD_VIEW:| | | |           | | | |           |x| | |
 
-Sent to server: PLAY_REQUEST:1;1
-
 isp_student1's turn (o)
 Received from server: TURN_SWITCH:isp_student1;o
 
-Received from server: BOARD_VIEW:| | | |           | | | |           |x|o| |
+Received from server: BOARD_VIEW:| | | |           | |o| |           |x| | |
 
 isp_student0's turn (x)
 Received from server: TURN_SWITCH:isp_student0;x
 
 Well played
-r: PLAY_REQUEST:2;2
+Sent to server: PLAY_REQUEST:2;1
 
 Received from server: PLAY_ACCEPTED
 
-Received from server: BOARD_VIEW:| | | |           | |x| |           |x|o| |
+Received from server: BOARD_VIEW:| | | |           | |o| |           |x|x| |
 
 isp_student1's turn (o)
 Received from server: TURN_SWITCH:isp_student1;o
 
-Received from server: BOARD_VIEW:| | | |           |o|x| |           |x|o| |
+Received from server: BOARD_VIEW:| | |o|           | |o| |           |x|x| |
 
 isp_student0's turn (x)
 Received from server: TURN_SWITCH:isp_student0;x
 
+Sent to server: PLAY_REQUEST:3;1
+
 Well played
 Received from server: PLAY_ACCEPTED
 
-Sent to server: PLAY_REQUEST:3;3
-
-Received from server: BOARD_VIEW:| | |x|           |o|x| |           |x|o| |
+Received from server: BOARD_VIEW:| | |o|           | |o| |           |x|x|x|
 
 isp_student1's turn (o)
 Received from server: TURN_SWITCH:isp_student1;o

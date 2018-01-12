@@ -50,6 +50,7 @@ void HandleConnectToClients() {
 		}
 		CloseOneThreadHandle(Server.ConnectUsersThreadHandle, Server.LogFilePtr); // close thread handle
 		if (Server.FirstClientDisconnectedBeforeGameStarted && ClientIndex == 1) {
+			Server.FirstClientDisconnectedBeforeGameStarted = false;
 			ClientIndex-=2;
 		}
 	}
