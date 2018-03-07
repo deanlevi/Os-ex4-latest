@@ -11,3 +11,4 @@ Received from server: BOARD_VIEW:| | | |           | | | |           | | | |
 isp_student1's turn (x)
 Received from server: TURN_SWITCH:isp_student1;x
 
+Custom message: ReceiveAndSendData failed to recv. Exiting...
